@@ -13,22 +13,16 @@ interface Props {
 /**
  * One habit on one day.
  *
- * Done fills, missed is a faint outline, and a day the habit never applied to
- * is a neutral dot -- quiet enough that an empty Saturday doesn't read as a
- * failure.
+ * Every state draws the same silhouette, so a column reads as one shape
+ * filling in rather than a mix of shapes and dots:
+ *   done    - solid in the habit's colour
+ *   missed  - the empty outline, in the habit's colour
+ *   n/a     - the empty outline in neutral grey, for a day the habit was never
+ *             due: before you created it, a rest day, or one still to come
  */
 export function Mark({ shape, color, status, size = 28, isToday, title }: Props) {
   const d = SHAPE_PATHS[shape];
-
-  if (status === 'na') {
-    return (
-      <svg width={size} height={size} viewBox="0 0 100 100" class="mark" aria-hidden="true">
-        {/* Visible enough that an untouched month still reads as a grid of
-            days, faint enough that it never looks like a miss. */}
-        <circle cx="50" cy="50" r="9" fill="currentColor" opacity="0.38" />
-      </svg>
-    );
-  }
+  const neutral = status === 'na';
 
   return (
     <svg
@@ -42,25 +36,59 @@ export function Mark({ shape, color, status, size = 28, isToday, title }: Props)
     >
       {title && <title>{title}</title>}
 
-      {isToday && (
+      {isToday && !neutral && (
         <circle cx="50" cy="50" r="47" fill="none" stroke={color} stroke-width="3" opacity="0.35" />
       )}
 
-      <g transform={isToday ? 'translate(50,50) scale(0.8) translate(-50,-50)' : undefined}>
+      <g
+        transform={
+          isToday && !neutral ? 'translate(50,50) scale(0.8) translate(-50,-50)' : undefined
+        }
+      >
         {status === 'complete' ? (
           <path d={d} fill={color} fill-rule="evenodd" />
         ) : (
           <path
             d={d}
             fill="none"
-            stroke={color}
-            stroke-width="7"
+            stroke={neutral ? 'currentColor' : color}
+            stroke-width={neutral ? 5 : 7}
             stroke-linejoin="round"
-            opacity="0.4"
+            opacity={neutral ? 0.3 : 0.45}
             fill-rule="evenodd"
           />
         )}
       </g>
     </svg>
+  );
+}
+
+/**
+ * The habit's badge at the top of its column.
+ *
+ * Deliberately not the same thing as a logged cell: it sits in a tinted tile,
+ * so a glance down the column never mistakes the header for a day you ticked.
+ */
+export function HabitBadge({
+  shape,
+  color,
+  size = 20,
+}: {
+  shape: ShapeId;
+  color: string;
+  size?: number;
+}) {
+  return (
+    <span
+      class="habit-badge"
+      style={{
+        background: `color-mix(in srgb, ${color} 18%, transparent)`,
+        borderColor: `color-mix(in srgb, ${color} 45%, transparent)`,
+      }}
+    >
+      <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+        <path d={SHAPE_PATHS[shape]} fill={color} fill-rule="evenodd" />
+      </svg>
+    </span>
   );
 }
