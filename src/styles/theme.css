@@ -1,0 +1,47 @@
+/* Light and dark are the same variable names with different values, so every
+   component styles itself once. `theme = system` just leaves the media query on;
+   an explicit choice sets data-theme on <html> and wins. */
+
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --surface-sunken: #efedea;
+  --border: #d9d5cf;
+  --text: #1b1d20;
+  --text-dim: #6b6f75;
+  --text-faint: #9ca1a8;
+  --accent: #1f9d79;
+  --danger: #c0453a;
+
+  --tap-min: 44px;
+  --radius: 10px;
+
+  --font-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #101215;
+    --surface: #181b1f;
+    --surface-sunken: #0b0d0f;
+    --border: #2a2f35;
+    --text: #e8e6e3;
+    --text-dim: #9aa0a7;
+    --text-faint: #5a626b;
+    --accent: #4fc3a1;
+    --danger: #e07268;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #101215;
+  --surface: #181b1f;
+  --surface-sunken: #0b0d0f;
+  --border: #2a2f35;
+  --text: #e8e6e3;
+  --text-dim: #9aa0a7;
+  --text-faint: #5a626b;
+  --accent: #4fc3a1;
+  --danger: #e07268;
+}

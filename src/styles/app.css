@@ -1,0 +1,197 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+html {
+  background: var(--bg);
+  /* Kills the rubber-band bounce that makes a standalone PWA feel like a web page. */
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Anything below 16px makes iOS zoom the viewport when the field takes focus. */
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: 16px;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* ---- top bar ---- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.icon-button {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  margin: -10px;
+  color: var(--text-dim);
+}
+
+.icon-button:active {
+  color: var(--text);
+}
+
+/* ---- screen body ---- */
+
+.screen {
+  flex: 1;
+  padding: 20px 16px 24px;
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+}
+
+.placeholder {
+  margin-top: 18vh;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.placeholder-mark {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 14px;
+  border: 1.5px solid var(--text-faint);
+  border-radius: 50%;
+}
+
+.placeholder p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ---- tab bar ---- */
+
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.tab {
+  min-height: var(--tap-min);
+  padding: 8px 4px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-faint);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tab[aria-current='page'] {
+  color: var(--accent);
+}
+
+.tab svg {
+  display: block;
+}
+
+/* ---- update banner ---- */
+
+.update-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom) + 58px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 13px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+}
+
+.update-banner span {
+  flex: 1;
+}
+
+.update-banner button {
+  min-height: var(--tap-min);
+  padding: 0 10px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.update-banner .dismiss {
+  color: var(--text-faint);
+  font-weight: 400;
+}
