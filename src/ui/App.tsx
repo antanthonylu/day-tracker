@@ -1,23 +1,26 @@
 import { useEffect, useState } from 'preact/hooks';
 import { TabBar, type TabId } from './TabBar';
 import { UpdateBanner } from './UpdateBanner';
+import { BackupBanner } from './BackupBanner';
 import { SettingsSheet } from './SettingsSheet';
-import { Today } from './screens/Today';
+import { HabitSheet } from './HabitSheet';
+import { Log } from './screens/Log';
 import { Month } from './screens/Month';
 import { Year } from './screens/Year';
 import { Insights } from './screens/Insights';
 import { load, loadError, ready, refreshToday } from '../store/store';
 
 const TITLES: Record<TabId, string> = {
-  today: 'Today',
+  log: 'Log',
   month: 'Month',
   year: 'Year',
   insights: 'Insights',
 };
 
 export function App() {
-  const [tab, setTab] = useState<TabId>('today');
+  const [tab, setTab] = useState<TabId>('log');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     void load();
@@ -35,22 +38,32 @@ export function App() {
     <div class="app-shell">
       <header class="topbar">
         <h1>{TITLES[tab]}</h1>
-        <button
-          class="icon-button"
-          type="button"
-          aria-label="Settings"
-          onClick={() => setSettingsOpen(true)}
-        >
-          <GearIcon />
-        </button>
+        <div class="topbar-actions">
+          <button
+            class="icon-button"
+            type="button"
+            aria-label="New habit"
+            onClick={() => setAdding(true)}
+          >
+            <PlusIcon />
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            aria-label="Settings"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <GearIcon />
+          </button>
+        </div>
       </header>
 
-      <main class="screen">
+      <main class={`screen screen-${tab}`}>
         {!ready.value ? null : loadError.value ? (
           <p class="notice error">Couldn’t open your data: {loadError.value}</p>
         ) : (
           <>
-            {tab === 'today' && <Today />}
+            {tab === 'log' && <Log />}
             {tab === 'month' && <Month />}
             {tab === 'year' && <Year />}
             {tab === 'insights' && <Insights />}
@@ -58,11 +71,29 @@ export function App() {
         )}
       </main>
 
+      <BackupBanner />
       <UpdateBanner />
       <TabBar active={tab} onChange={setTab} />
 
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {adding && <HabitSheet onClose={() => setAdding(false)} />}
     </div>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
   );
 }
 

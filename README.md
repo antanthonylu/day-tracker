@@ -80,9 +80,23 @@ it either fully succeeds or changes nothing.
 
 ## Status
 
-Milestones 1-3 of 8 (see `HANDOFF.md` §12): installable shell, data layer and
-habit management, and daily logging. Month, Year and Insights are still
-placeholders until their milestone lands.
+All eight milestones built (see `HANDOFF.md` §12).
+
+## The four screens
+
+- **Log** — the home screen and the way you record things. Days run down the
+  page, habits across it; tap a cell to mark it. It opens centred on today,
+  scrolls up into history a couple of months at a time, and shows a few days
+  ahead greyed out. A dashed rule marks each Sunday.
+- **Month** — one month as a calendar. Every day is a pie split into equal
+  wedges, one per habit due that day, filled for the ones you did. Pick a
+  single habit to see its own shape instead. Tap a day to edit it.
+- **Year** — twelve mini-months, same two modes. Drawn to canvas rather than
+  SVG: a year of ten habits is about four thousand shapes, and as components
+  that stalled the tab for over a second.
+- **Insights** — for the chosen month: which habit carried it, a day-by-day
+  heatmap, a ranked list with the change since last month, and each habit's
+  strongest weekday.
 
 ### Where this differs from HANDOFF.md
 
@@ -94,6 +108,9 @@ The spec is the starting point, not a contract. These were changed on purpose:
   the ~10px the year grid will draw them at.
 - **No "week starts on" or "day starts at" settings.** Weeks start Sunday and
   days start at midnight, fixed, as `WEEK_STARTS_ON` / `DAY_STARTS_AT_HOUR`.
-- **The date switcher travels forward past today** (read-only) and back to at
-  least 1 January of the current year, rather than being pinned to habit
-  history.
+- **There is no Today screen.** The Log replaces it: one continuous scroll
+  rather than a day at a time behind arrows. It is also the habits × days grid
+  the spec wanted for Month, so Month became the calendar view instead.
+- **History reaches back to at least 1 January of the current year** and a few
+  days forward, rather than being pinned to habit history. Future days are
+  readable but not loggable.

@@ -1,16 +1,22 @@
 import { defineConfig } from 'vitest/config';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import pkg from './package.json';
 
 // Deployed under https://<user>.github.io/day-tracker/ — every asset path must be
 // relative to that subpath, so `base` is not '/'.
 export default defineConfig({
   base: '/day-tracker/',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [
     preact(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: [
+        'apple-touch-icon.png',
+        'apple-touch-icon-precomposed.png',
         'apple-touch-icon-180.png',
         'apple-touch-icon-167.png',
         'apple-touch-icon-152.png',

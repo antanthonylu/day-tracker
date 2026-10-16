@@ -1,7 +1,8 @@
 import { signal, computed } from '@preact/signals';
-import type { DateKey, Entry, Habit, HabitId, Settings } from '../domain/types';
+import type { DateKey, Entry, ExportFile, Habit, HabitId, Settings } from '../domain/types';
 import { DAY_STARTS_AT_HOUR, DEFAULT_SETTINGS } from '../domain/types';
 import { earliestNavigableDate, todayKey } from '../domain/dates';
+import { backupFilename, mergeBackup, type MergeSummary } from '../domain/backup';
 import { IndexedDbAdapter } from '../storage/IndexedDbAdapter';
 import type { StorageAdapter } from '../storage/StorageAdapter';
 import { requestPersistentStorage, type PersistenceState } from '../storage/persist';
@@ -164,4 +165,78 @@ export function applyTheme(theme: Settings['theme']): void {
 
 export function storageStats(): Promise<{ habits: number; entries: number }> {
   return adapter.stats();
+}
+
+/* ---- backup ---- */
+
+function applySnapshot(file: ExportFile): void {
+  habits.value = [...file.habits].sort((a, b) => a.order - b.order);
+  entries.value = new Map(file.entries.map((e) => [entryKey(e.habitId, e.date), e]));
+  settings.value = file.settings;
+  applyTheme(file.settings.theme);
+}
+
+export function buildExport(): Promise<ExportFile> {
+  return adapter.exportAll();
+}
+
+/**
+ * Writes the backup out, preferring the iOS share sheet so the file can go
+ * straight to Files or iCloud. A download is the fallback; in a standalone
+ * PWA there is no visible Downloads tray, which is why sharing comes first.
+ */
+export async function exportBackup(): Promise<'shared' | 'downloaded'> {
+  const file = await buildExport();
+  const json = JSON.stringify(file, null, 2);
+  const name = backupFilename(today.value);
+
+  const canShareFile =
+    typeof navigator.canShare === 'function' &&
+    navigator.canShare({ files: [new File(['{}'], name, { type: 'application/json' })] });
+
+  if (canShareFile && navigator.share) {
+    try {
+      await navigator.share({
+        files: [new File([json], name, { type: 'application/json' })],
+        title: 'Day Tracker backup',
+      });
+      await markBackedUp();
+      return 'shared';
+    } catch (error) {
+      // A cancelled share is not a failure; fall through to the download.
+      if (error instanceof DOMException && error.name === 'AbortError') return 'shared';
+    }
+  }
+
+  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+  await markBackedUp();
+  return 'downloaded';
+}
+
+async function markBackedUp(): Promise<void> {
+  await updateSettings({ lastBackupAt: new Date().toISOString() });
+}
+
+/** Replaces everything with the file's contents. */
+export async function importReplace(file: ExportFile): Promise<void> {
+  await adapter.importAll(file);
+  applySnapshot(file);
+}
+
+/** Unions the file with what is here; the higher value wins on conflicts. */
+export async function importMerge(file: ExportFile): Promise<MergeSummary> {
+  const current = {
+    habits: habits.value,
+    entries: [...entries.value.values()],
+    settings: settings.value,
+  };
+  const { result, summary } = mergeBackup(current, file);
+  await adapter.importAll(result);
+  applySnapshot(result);
+  return summary;
 }

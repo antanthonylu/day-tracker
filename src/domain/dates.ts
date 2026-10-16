@@ -186,3 +186,30 @@ export function earliestNavigableDate(today: DateKey, earliestData?: DateKey): D
   if (earliestData && earliestData < yearStart) return startOfYear(earliestData);
   return yearStart;
 }
+
+/** First day of the calendar week containing `key`. */
+export function startOfWeek(key: DateKey, weekStartsOn = 0): DateKey {
+  const delta = (dayOfWeek(key) - weekStartsOn + 7) % 7;
+  return addDays(key, -delta);
+}
+
+/** The seven days of the calendar week containing `key`, in order. */
+export function weekOf(key: DateKey, weekStartsOn = 0): DateKey[] {
+  const start = startOfWeek(key, weekStartsOn);
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
+/**
+ * The calendar grid for a month: whole weeks, padded with the neighbouring
+ * months' days so every row has seven cells.
+ */
+export function monthGrid(key: DateKey, weekStartsOn = 0): DateKey[] {
+  const first = startOfMonth(key);
+  const { year, month } = parseDateKey(first);
+  const last = `${year}-${pad(month)}-${pad(daysInMonth(year, month))}`;
+  const start = startOfWeek(first, weekStartsOn);
+  const end = addDays(startOfWeek(last, weekStartsOn), 6);
+  const days: DateKey[] = [];
+  for (let d = start; d <= end; d = addDays(d, 1)) days.push(d);
+  return days;
+}

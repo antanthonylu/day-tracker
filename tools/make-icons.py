@@ -27,16 +27,19 @@ PATTERN = [
 
 
 def new_canvas(size, bg):
-    return bytearray(bytes(bg) * (size * size))
+    # RGBA, fully opaque. iOS is pickier about PNG variants than the spec
+    # suggests, and an alpha channel is the safest form to hand it.
+    return bytearray(bytes((*bg, 255)) * (size * size))
 
 
 def blend(canvas, size, x, y, color, alpha):
     if alpha <= 0 or x < 0 or y < 0 or x >= size or y >= size:
         return
-    i = (y * size + x) * 3
+    i = (y * size + x) * 4
     for c in range(3):
         src = canvas[i + c]
         canvas[i + c] = int(src + (color[c] - src) * alpha + 0.5)
+    canvas[i + 3] = 255
 
 
 def disc(canvas, size, cx, cy, r, color):
@@ -58,7 +61,7 @@ def ring(canvas, size, cx, cy, r, width, color):
 
 def downsample(canvas, size, factor):
     out_size = size // factor
-    out = bytearray(out_size * out_size * 3)
+    out = bytearray(out_size * out_size * 4)
     area = factor * factor
     for y in range(out_size):
         for x in range(out_size):
@@ -66,19 +69,20 @@ def downsample(canvas, size, factor):
             for dy in range(factor):
                 row = (y * factor + dy) * size
                 for dx in range(factor):
-                    i = (row + x * factor + dx) * 3
+                    i = (row + x * factor + dx) * 4
                     totals[0] += canvas[i]
                     totals[1] += canvas[i + 1]
                     totals[2] += canvas[i + 2]
-            o = (y * out_size + x) * 3
+            o = (y * out_size + x) * 4
             for c in range(3):
                 out[o + c] = totals[c] // area
+            out[o + 3] = 255
     return out, out_size
 
 
 def write_png(path, pixels, size):
     raw = b"".join(
-        b"\x00" + bytes(pixels[y * size * 3 : (y + 1) * size * 3]) for y in range(size)
+        b"\x00" + bytes(pixels[y * size * 4 : (y + 1) * size * 4]) for y in range(size)
     )
 
     def chunk(tag, data):
@@ -86,7 +90,8 @@ def write_png(path, pixels, size):
         return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body))
 
     png = b"\x89PNG\r\n\x1a\n"
-    png += chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 2, 0, 0, 0))
+    # colour type 6 = truecolour with alpha
+    png += chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
     png += chunk(b"IDAT", zlib.compress(raw, 9))
     png += chunk(b"IEND", b"")
     Path(path).write_bytes(png)
@@ -125,3 +130,7 @@ if __name__ == "__main__":
     render(public / "apple-touch-icon-180.png", 180, 0.16)
     render(public / "apple-touch-icon-167.png", 167, 0.16)
     render(public / "apple-touch-icon-152.png", 152, 0.16)
+    # iOS probes these exact names when a sized <link> does not satisfy it, and
+    # "precomposed" stops older versions adding their own gloss on top.
+    render(public / "apple-touch-icon.png", 180, 0.16)
+    render(public / "apple-touch-icon-precomposed.png", 180, 0.16)

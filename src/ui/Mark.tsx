@@ -23,7 +23,9 @@ export function Mark({ shape, color, status, size = 28, isToday, title }: Props)
   if (status === 'na') {
     return (
       <svg width={size} height={size} viewBox="0 0 100 100" class="mark" aria-hidden="true">
-        <circle cx="50" cy="50" r="7" fill="currentColor" opacity="0.22" />
+        {/* Visible enough that an untouched month still reads as a grid of
+            days, faint enough that it never looks like a miss. */}
+        <circle cx="50" cy="50" r="9" fill="currentColor" opacity="0.38" />
       </svg>
     );
   }

@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'preact/hooks';
 import { Sheet } from './Sheet';
 import { ManageHabits } from './ManageHabits';
+import { BackupSection } from './BackupSection';
 import type { Settings } from '../domain/types';
-import { persistence, settings, storageStats, updateSettings } from '../store/store';
+import {
+  importReplace,
+  persistence,
+  settings,
+  storageStats,
+  today,
+  updateSettings,
+} from '../store/store';
 
 const THEMES: { id: Settings['theme']; label: string }[] = [
   { id: 'system', label: 'System' },
@@ -43,6 +51,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
       </fieldset>
 
+      <BackupSection />
+
       <h3 class="section-head">Habits</h3>
       <button type="button" class="wide-button" onClick={() => setManaging(true)}>
         Manage habits
@@ -59,10 +69,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <dt>Last backup</dt>
         <dd>{current.lastBackupAt ? current.lastBackupAt.slice(0, 10) : 'Never'}</dd>
       </dl>
-      <p class="hint">
-        Everything lives on this device only. Deleting the Home Screen icon deletes it all — backup
-        and restore arrive in milestone 7.
-      </p>
+      <p class="hint">App version {__APP_VERSION__}.</p>
+
+      {/* Stripped from production builds: import.meta.env.DEV is a compile-time
+          constant, so the seed module is never bundled for the real app. */}
+      {import.meta.env.DEV && (
+        <>
+          <h3 class="section-head">Developer</h3>
+          <button
+            type="button"
+            class="wide-button destructive"
+            onClick={() => {
+              void import('../dev/seed').then(({ demoData }) =>
+                importReplace(demoData(today.value)),
+              );
+            }}
+          >
+            Replace with demo data
+          </button>
+          <p class="hint">Ten habits and a year of history, for performance checks.</p>
+        </>
+      )}
 
       {managing && <ManageHabits onClose={() => setManaging(false)} />}
     </Sheet>

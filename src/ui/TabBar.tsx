@@ -1,4 +1,4 @@
-export type TabId = 'today' | 'month' | 'year' | 'insights';
+export type TabId = 'log' | 'month' | 'year' | 'insights';
 
 interface Props {
   active: TabId;
@@ -6,7 +6,7 @@ interface Props {
 }
 
 const TABS: { id: TabId; label: string; icon: () => preact.JSX.Element }[] = [
-  { id: 'today', label: 'Today', icon: TodayIcon },
+  { id: 'log', label: 'Log', icon: LogIcon },
   { id: 'month', label: 'Month', icon: MonthIcon },
   { id: 'year', label: 'Year', icon: YearIcon },
   { id: 'insights', label: 'Insights', icon: InsightsIcon },
@@ -39,11 +39,13 @@ const stroke = {
   'stroke-linejoin': 'round' as const,
 };
 
-function TodayIcon() {
+function LogIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" {...stroke}>
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" />
+      <path d="M4 6h4M4 12h4M4 18h4" />
+      <rect x="12" y="4" width="8" height="4" rx="1.2" />
+      <rect x="12" y="10" width="8" height="4" rx="1.2" fill="currentColor" stroke="none" />
+      <rect x="12" y="16" width="8" height="4" rx="1.2" />
     </svg>
   );
 }

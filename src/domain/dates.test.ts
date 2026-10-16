@@ -12,11 +12,14 @@ import {
   fromDateKey,
   isValidDateKey,
   lastNDays,
+  monthGrid,
   monthLabel,
   parseDateKey,
   shortDateLabel,
   startOfMonth,
+  startOfWeek,
   startOfYear,
+  weekOf,
   toDateKey,
   todayKey,
 } from './dates';
@@ -241,5 +244,56 @@ describe('labels', () => {
     expect(dayName('2026-10-15')).toBe('Thu');
     expect(dayName('2026-10-15', 'long')).toBe('Thursday');
     expect(dayName('2026-10-15', 'narrow')).toBe('T');
+  });
+});
+
+describe('startOfWeek / weekOf', () => {
+  it('snaps back to Sunday', () => {
+    expect(startOfWeek('2026-10-15')).toBe('2026-10-11'); // Thu -> Sun
+    expect(startOfWeek('2026-10-11')).toBe('2026-10-11'); // already Sunday
+    expect(startOfWeek('2026-10-17')).toBe('2026-10-11'); // Sat
+  });
+
+  it('can start on Monday instead', () => {
+    expect(startOfWeek('2026-10-15', 1)).toBe('2026-10-12');
+    expect(startOfWeek('2026-10-11', 1)).toBe('2026-10-05'); // Sunday belongs to the prior week
+  });
+
+  it('crosses a month boundary', () => {
+    expect(startOfWeek('2026-11-02')).toBe('2026-11-01');
+    expect(startOfWeek('2026-10-01')).toBe('2026-09-27');
+  });
+
+  it('returns seven consecutive days starting Sunday', () => {
+    const week = weekOf('2026-10-15');
+    expect(week).toHaveLength(7);
+    expect(week[0]).toBe('2026-10-11');
+    expect(week[6]).toBe('2026-10-17');
+    expect(week).toContain('2026-10-15');
+  });
+});
+
+describe('monthGrid', () => {
+  it('covers whole weeks and contains every day of the month', () => {
+    const grid = monthGrid('2026-10-15');
+    expect(grid.length % 7).toBe(0);
+    expect(grid[0]).toBe('2026-09-27'); // the Sunday before 1 Oct
+    expect(grid).toContain('2026-10-01');
+    expect(grid).toContain('2026-10-31');
+    // 31 Oct 2026 is a Saturday, so the month ends flush with its last week.
+    expect(grid.at(-1)).toBe('2026-10-31');
+    expect(grid).toHaveLength(35);
+  });
+
+  it('handles a month that starts on the first day of a week', () => {
+    const grid = monthGrid('2026-11-10'); // 1 Nov 2026 is a Sunday
+    expect(grid[0]).toBe('2026-11-01');
+    expect(grid.length % 7).toBe(0);
+  });
+
+  it('handles February in a leap year', () => {
+    const grid = monthGrid('2028-02-10');
+    expect(grid).toContain('2028-02-29');
+    expect(grid.length % 7).toBe(0);
   });
 });
