@@ -1347,3 +1347,10 @@ button {
 .diag-row.bad {
   color: var(--danger);
 }
+
+/* Holds the space a screen will occupy while its code arrives, so the layout
+   doesn't jump when it does. */
+.screen-loading {
+  flex: 1;
+  min-height: 120px;
+}

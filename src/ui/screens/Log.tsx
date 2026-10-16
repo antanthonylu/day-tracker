@@ -1,9 +1,11 @@
 import { useState } from 'preact/hooks';
-import { HabitSheet } from '../HabitSheet';
-import { HabitDetail } from '../HabitDetail';
 import { LogGrid } from '../LogGrid';
+import { lazyScreen } from '../lazyScreen';
 import type { Habit } from '../../domain/types';
 import { activeHabits } from '../../store/store';
+
+const HabitSheet = lazyScreen(() => import('../HabitSheet').then((m) => m.HabitSheet));
+const HabitDetail = lazyScreen(() => import('../HabitDetail').then((m) => m.HabitDetail));
 
 export function Log() {
   const habits = activeHabits.value;

@@ -1,8 +1,8 @@
 import { signal, computed } from '@preact/signals';
+import type { MergeSummary } from '../domain/backup';
 import type { DateKey, Entry, ExportFile, Habit, HabitId, Settings } from '../domain/types';
 import { DAY_STARTS_AT_HOUR, DEFAULT_SETTINGS } from '../domain/types';
 import { earliestNavigableDate, todayKey } from '../domain/dates';
-import { backupFilename, mergeBackup, type MergeSummary } from '../domain/backup';
 import { IndexedDbAdapter } from '../storage/IndexedDbAdapter';
 import type { StorageAdapter } from '../storage/StorageAdapter';
 import { requestPersistentStorage, type PersistenceState } from '../storage/persist';
@@ -183,6 +183,7 @@ export function buildExport(): Promise<ExportFile> {
  * PWA there is no visible Downloads tray, which is why sharing comes first.
  */
 export async function exportBackup(): Promise<'shared' | 'downloaded'> {
+  const { backupFilename } = await import('../domain/backup');
   const file = await buildExport();
   const json = JSON.stringify(file, null, 2);
   const name = backupFilename(today.value);
@@ -227,6 +228,7 @@ export async function importReplace(file: ExportFile): Promise<void> {
 
 /** Unions the file with what is here; the higher value wins on conflicts. */
 export async function importMerge(file: ExportFile): Promise<MergeSummary> {
+  const { mergeBackup } = await import('../domain/backup');
   const current = {
     habits: habits.value,
     entries: [...entries.value.values()],

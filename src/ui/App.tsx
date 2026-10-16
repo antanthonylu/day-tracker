@@ -2,13 +2,16 @@ import { useEffect, useState } from 'preact/hooks';
 import { TabBar, type TabId } from './TabBar';
 import { UpdateBanner } from './UpdateBanner';
 import { BackupBanner } from './BackupBanner';
-import { SettingsSheet } from './SettingsSheet';
-import { HabitSheet } from './HabitSheet';
+import { lazyScreen } from './lazyScreen';
 import { Log } from './screens/Log';
-import { Month } from './screens/Month';
-import { Year } from './screens/Year';
-import { Insights } from './screens/Insights';
 import { load, loadError, ready, refreshToday } from '../store/store';
+
+// Everything but the Log is fetched the first time it is opened.
+const Month = lazyScreen(() => import('./screens/Month').then((m) => m.Month));
+const Year = lazyScreen(() => import('./screens/Year').then((m) => m.Year));
+const Insights = lazyScreen(() => import('./screens/Insights').then((m) => m.Insights));
+const SettingsSheet = lazyScreen(() => import('./SettingsSheet').then((m) => m.SettingsSheet));
+const HabitSheet = lazyScreen(() => import('./HabitSheet').then((m) => m.HabitSheet));
 
 const TITLES: Record<TabId, string> = {
   log: 'Log',
@@ -36,6 +39,9 @@ export function App() {
 
   return (
     <div class="app-shell">
+      {/* The bars don't depend on stored data, so they paint on the first
+          frame rather than after IndexedDB answers. The app looks open
+          immediately instead of showing an empty background. */}
       <header class="topbar">
         <h1>{TITLES[tab]}</h1>
         <div class="topbar-actions">
@@ -59,7 +65,9 @@ export function App() {
       </header>
 
       <main class={`screen screen-${tab}`}>
-        {!ready.value ? null : loadError.value ? (
+        {!ready.value ? (
+          <div class="screen-loading" aria-busy="true" />
+        ) : loadError.value ? (
           <p class="notice error">Couldn’t open your data: {loadError.value}</p>
         ) : (
           <>
