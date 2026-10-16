@@ -56,7 +56,7 @@ export interface ExportFile {
   settings: Settings;
 }
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** How a habit stands on one day. A habit is done or it isn't. */
 export type DayStatus = 'complete' | 'missed' | 'na';

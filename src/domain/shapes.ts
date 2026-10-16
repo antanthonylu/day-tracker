@@ -84,3 +84,50 @@ export function isShapeId(value: unknown): value is ShapeId {
 export function shapePath(shape: ShapeId): string {
   return SHAPE_PATHS[shape];
 }
+
+/**
+ * Shapes that existed in earlier builds, mapped to their nearest survivor.
+ *
+ * The set was reworked once: circle, square, diamond, triangle, hexagon and
+ * plus were dropped. A habit saved with one of those used to resolve to
+ * `undefined` and render an empty path -- an invisible mark that still
+ * toggled, so tapping a day appeared to do nothing at all.
+ */
+const LEGACY_SHAPES: Record<string, ShapeId> = {
+  circle: 'blob',
+  square: 'squircle',
+  rounded: 'squircle',
+  diamond: 'gem',
+  triangle: 'gem',
+  hexagon: 'dodecagon' in SHAPE_PATHS ? ('dodecagon' as ShapeId) : 'squircle',
+  pentagon: 'squircle',
+  octagon: 'squircle',
+  plus: 'sparkle',
+  clover: 'flower' in SHAPE_PATHS ? ('flower' as ShapeId) : 'sparkle',
+  sunburst: 'star',
+  flower: 'sparkle',
+  gear: 'sparkle',
+  dodecagon: 'gem',
+  shield: 'gem',
+  spade: 'heart',
+  bowtie: 'sparkle',
+  cloud: 'blob',
+  squircle: 'squircle',
+};
+
+/**
+ * Turns whatever is stored into a shape that can actually be drawn.
+ *
+ * Never returns undefined: an unrecognised value falls back to a visible
+ * default rather than a silent blank.
+ */
+export function resolveShape(value: unknown): ShapeId {
+  if (isShapeId(value)) return value;
+  if (typeof value === 'string' && value in LEGACY_SHAPES) return LEGACY_SHAPES[value]!;
+  return 'blob';
+}
+
+/** True when the value is a shape this build knows, old names included. */
+export function isKnownShape(value: unknown): boolean {
+  return isShapeId(value) || (typeof value === 'string' && value in LEGACY_SHAPES);
+}

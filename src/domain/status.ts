@@ -1,5 +1,21 @@
-import { dayOfWeek } from './dates';
+import { dayOfWeek, isValidDateKey } from './dates';
 import type { DateKey, DayStatus, Entry, Habit } from './types';
+
+/**
+ * The schedule, defensively.
+ *
+ * A habit with no usable schedule means "every day", never "no days". There
+ * is no way to deliberately create an empty schedule -- the editor refuses to
+ * save one -- so an empty or malformed list is always corruption, and reading
+ * it literally makes every single cell non-applicable, which disables every
+ * button and leaves tapping a day doing nothing at all.
+ */
+function scheduleOf(habit: Habit): number[] | null {
+  const days = habit.activeDays;
+  if (!Array.isArray(days) || days.length === 0) return null;
+  const valid = days.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+  return valid.length === 0 ? null : valid;
+}
 
 /**
  * Whether a habit is answerable on a day at all.
@@ -11,11 +27,31 @@ import type { DateKey, DayStatus, Entry, Habit } from './types';
  * weekdays-only habit isn't punished every Saturday.
  */
 export function isApplicable(habit: Habit, date: DateKey, today: DateKey): boolean {
-  if (date < habit.createdAt) return false;
+  // A missing or malformed start date must not hide the habit entirely.
+  if (isValidDateKey(habit.createdAt) && date < habit.createdAt) return false;
   if (date > today) return false;
-  if (habit.archivedAt && date >= habit.archivedAt) return false;
-  if (habit.activeDays && !habit.activeDays.includes(dayOfWeek(date))) return false;
+  if (habit.archivedAt && isValidDateKey(habit.archivedAt) && date >= habit.archivedAt) {
+    return false;
+  }
+  const schedule = scheduleOf(habit);
+  if (schedule && !schedule.includes(dayOfWeek(date))) return false;
   return true;
+}
+
+/** Why a day can't be logged, for showing the user instead of a dead button. */
+export function whyNotApplicable(
+  habit: Habit,
+  date: DateKey,
+  today: DateKey,
+): 'future' | 'before-start' | 'archived' | 'rest-day' | null {
+  if (date > today) return 'future';
+  if (isValidDateKey(habit.createdAt) && date < habit.createdAt) return 'before-start';
+  if (habit.archivedAt && isValidDateKey(habit.archivedAt) && date >= habit.archivedAt) {
+    return 'archived';
+  }
+  const schedule = scheduleOf(habit);
+  if (schedule && !schedule.includes(dayOfWeek(date))) return 'rest-day';
+  return null;
 }
 
 /** Done, not done, or never asked. */

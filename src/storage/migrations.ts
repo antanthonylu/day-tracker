@@ -1,18 +1,31 @@
+import { resolveShape } from '../domain/shapes';
 import type { ExportFile } from '../domain/types';
 import { SCHEMA_VERSION } from '../domain/types';
 
-/**
- * One function per version step, applied in order.
- *
- * v1 is the first schema, so there is nothing to migrate yet. The runner
- * exists from day one anyway: the moment a real migration is needed there will
- * already be backup files in the wild written by an older build, and the place
- * to handle them has to be here rather than invented under pressure.
- */
+/** One function per version step, applied in order. */
 type Migration = (data: ExportFile) => ExportFile;
 
 const MIGRATIONS: Record<number, Migration> = {
-  // 2: (data) => ({ ...data, schemaVersion: 2, /* ... */ }),
+  /**
+   * v1 -> v2: the shape vocabulary was reworked and six names were dropped
+   * (circle, square, diamond, triangle, hexagon, plus). Habits saved under the
+   * old names resolved to no path at all and drew nothing, so a day could be
+   * logged and look identical either way. Each one is rewritten to its nearest
+   * survivor, and the count habits that v1 allowed collapse to plain marks.
+   */
+  2: (data) => ({
+    ...data,
+    schemaVersion: 2,
+    habits: data.habits.map((habit) => {
+      const migrated = { ...habit, shape: resolveShape(habit.shape) };
+      for (const dead of ['kind', 'target', 'unit', 'step'] as const) {
+        delete (migrated as Record<string, unknown>)[dead];
+      }
+      return migrated;
+    }),
+    // A count habit's partial days become plain done/not-done.
+    entries: data.entries.map((entry) => ({ ...entry, value: entry.value >= 1 ? 1 : 0 })),
+  }),
 };
 
 export class UnsupportedSchemaError extends Error {

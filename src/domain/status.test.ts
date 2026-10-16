@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isApplicable, isDone, statusOf } from './status';
+import { isApplicable, isDone, statusOf, whyNotApplicable } from './status';
 import type { Entry, Habit } from './types';
 
 const TODAY = '2026-10-15'; // a Thursday
@@ -49,8 +49,26 @@ describe('isApplicable', () => {
     expect(isApplicable(h, '2026-10-12', TODAY)).toBe(true); // Monday
   });
 
-  it('treats an empty schedule as never applicable', () => {
-    expect(isApplicable(habit({ activeDays: [] }), TODAY, TODAY)).toBe(false);
+  it('treats a corrupt schedule as every day, never as no days', () => {
+    // The editor refuses to save an empty schedule, so one in the data is
+    // always corruption. Reading it literally disables every cell and leaves
+    // tapping a day doing nothing, with no way to see why.
+    expect(isApplicable(habit({ activeDays: [] }), TODAY, TODAY)).toBe(true);
+    expect(isApplicable(habit({ activeDays: [99] }), TODAY, TODAY)).toBe(true);
+    expect(isApplicable(habit({ activeDays: undefined }), TODAY, TODAY)).toBe(true);
+    expect(isApplicable(habit({ activeDays: 'mon' as unknown as number[] }), TODAY, TODAY)).toBe(
+      true,
+    );
+  });
+
+  it('still honours a schedule that has at least one real day', () => {
+    expect(isApplicable(habit({ activeDays: [4, 99] }), TODAY, TODAY)).toBe(true); // Thursday
+    expect(isApplicable(habit({ activeDays: [1, 99] }), TODAY, TODAY)).toBe(false);
+  });
+
+  it('ignores a missing or malformed start date rather than hiding the habit', () => {
+    expect(isApplicable(habit({ createdAt: '' }), TODAY, TODAY)).toBe(true);
+    expect(isApplicable(habit({ createdAt: 'not-a-date' }), TODAY, TODAY)).toBe(true);
   });
 });
 
@@ -75,5 +93,15 @@ describe('isDone', () => {
     expect(isDone(entry(1))).toBe(true);
     expect(isDone(entry(0))).toBe(false);
     expect(isDone(undefined)).toBe(false);
+  });
+});
+
+describe('whyNotApplicable', () => {
+  it('names the reason a day is locked', () => {
+    expect(whyNotApplicable(habit(), TODAY, TODAY)).toBeNull();
+    expect(whyNotApplicable(habit(), '2026-10-16', TODAY)).toBe('future');
+    expect(whyNotApplicable(habit({ createdAt: '2026-10-20' }), TODAY, TODAY)).toBe('before-start');
+    expect(whyNotApplicable(habit({ archivedAt: '2026-10-01' }), TODAY, TODAY)).toBe('archived');
+    expect(whyNotApplicable(habit({ activeDays: [1] }), TODAY, TODAY)).toBe('rest-day');
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { Sheet } from './Sheet';
 import { ManageHabits } from './ManageHabits';
 import { BackupSection } from './BackupSection';
+import { HabitDiagnostics } from './HabitDiagnostics';
 import type { Settings } from '../domain/types';
 import {
   importReplace,
@@ -57,6 +58,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       <button type="button" class="wide-button" onClick={() => setManaging(true)}>
         Manage habits
       </button>
+
+      <HabitDiagnostics />
 
       <h3 class="section-head">Storage</h3>
       <dl class="stats">
