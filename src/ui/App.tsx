@@ -71,8 +71,8 @@ export function App() {
         )}
       </main>
 
-      <BackupBanner />
       <UpdateBanner />
+      <BackupBanner />
       <TabBar active={tab} onChange={setTab} />
 
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}

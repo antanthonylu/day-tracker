@@ -9,11 +9,15 @@ export default defineConfig({
   base: '/day-tracker/',
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
   },
   plugins: [
     preact(),
     VitePWA({
-      registerType: 'prompt',
+      // autoUpdate, not 'prompt'. A prompt only works if the banner is seen
+      // and tapped; miss it once and the installed app keeps serving a stale
+      // build forever, so every later fix silently never arrives.
+      registerType: 'autoUpdate',
       includeAssets: [
         'apple-touch-icon.png',
         'apple-touch-icon-precomposed.png',
@@ -47,6 +51,10 @@ export default defineConfig({
         // Everything the app needs is precached, so it runs with no network at all.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         cleanupOutdatedCaches: true,
+        // Take over straight away rather than waiting for every tab to close,
+        // which on a Home Screen app can be never.
+        skipWaiting: true,
+        clientsClaim: true,
         navigateFallback: 'index.html',
       },
     }),

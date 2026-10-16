@@ -2,32 +2,36 @@ import { useEffect, useState } from 'preact/hooks';
 import { registerSW } from 'virtual:pwa-register';
 
 /**
- * The service worker is registered with `registerType: 'prompt'`, so a new
- * build never swaps itself in mid-session. It waits here until you say so,
- * which keeps a reload from happening under your thumb while you're logging.
+ * The service worker updates itself now (registerType: 'autoUpdate'), so there
+ * is nothing to approve -- a new build is in place by the next launch.
+ *
+ * This only reports it, because an app that silently swaps underneath you is
+ * unsettling, and because knowing a build landed is the difference between
+ * "the fix didn't work" and "the fix never arrived".
  */
 export function UpdateBanner() {
-  const [needRefresh, setNeedRefresh] = useState(false);
-  const [updateSW, setUpdateSW] = useState<(() => Promise<void>) | null>(null);
+  const [updated, setUpdated] = useState(false);
 
   useEffect(() => {
-    const update = registerSW({
-      onNeedRefresh: () => setNeedRefresh(true),
+    registerSW({
+      immediate: true,
+      onRegisteredSW: (_url, registration) => {
+        // Check again when the app comes back to the foreground, so a Home
+        // Screen app that is never closed still picks up new builds.
+        const check = () => {
+          if (document.visibilityState === 'visible') void registration?.update();
+        };
+        document.addEventListener('visibilitychange', check);
+      },
+      onNeedRefresh: () => setUpdated(true),
     });
-    setUpdateSW(() => update);
   }, []);
 
-  if (!needRefresh) return null;
+  if (!updated) return null;
 
   return (
-    <div class="update-banner" role="status">
-      <span>Update available</span>
-      <button class="dismiss" type="button" onClick={() => setNeedRefresh(false)}>
-        Later
-      </button>
-      <button type="button" onClick={() => void updateSW?.()}>
-        Reload
-      </button>
+    <div class="banner update-banner" role="status">
+      <span>Updating to the latest version…</span>
     </div>
   );
 }

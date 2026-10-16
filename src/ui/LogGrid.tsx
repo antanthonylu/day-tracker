@@ -130,7 +130,7 @@ export function LogGrid({ habits, onOpenHabit }: Props) {
             >
               <div class="log-date">
                 <span class="log-day">{String(parseDateKey(date).day).padStart(2, '0')}</span>
-                <span class="log-dow">{dayName(date).toUpperCase()}</span>
+                <span class="log-dow">{isToday ? 'TODAY' : dayName(date).toUpperCase()}</span>
               </div>
 
               {habits.map((habit) => {

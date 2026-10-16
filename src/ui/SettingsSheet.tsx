@@ -69,7 +69,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <dt>Last backup</dt>
         <dd>{current.lastBackupAt ? current.lastBackupAt.slice(0, 10) : 'Never'}</dd>
       </dl>
-      <p class="hint">App version {__APP_VERSION__}.</p>
+      <p class="hint">
+        App version {__APP_VERSION__} · build {__BUILD_TIME__}
+      </p>
 
       {/* Stripped from production builds: import.meta.env.DEV is a compile-time
           constant, so the seed module is never bundled for the real app. */}
