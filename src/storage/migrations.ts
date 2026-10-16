@@ -26,6 +26,24 @@ const MIGRATIONS: Record<number, Migration> = {
     // A count habit's partial days become plain done/not-done.
     entries: data.entries.map((entry) => ({ ...entry, value: entry.value >= 1 ? 1 : 0 })),
   }),
+
+  /**
+   * v2 -> v3: start dates and rest-day schedules are gone. Both existed to
+   * say "this day doesn't count", and between them a habit could end up
+   * applicable on no day at all -- every cell disabled, every tap ignored,
+   * nothing on screen explaining why. Only the future is off limits now.
+   */
+  3: (data) => ({
+    ...data,
+    schemaVersion: 3,
+    habits: data.habits.map((habit) => {
+      const migrated = { ...habit };
+      for (const dead of ['createdAt', 'activeDays'] as const) {
+        delete (migrated as Record<string, unknown>)[dead];
+      }
+      return migrated;
+    }),
+  }),
 };
 
 export class UnsupportedSchemaError extends Error {

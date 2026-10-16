@@ -38,9 +38,6 @@ export const today = computed<DateKey>(() => {
 /** Oldest day the switchers will travel to: 1 January this year, or earlier. */
 export const earliestDate = computed<DateKey>(() => {
   let earliest: DateKey | undefined;
-  for (const h of habits.value) {
-    if (!earliest || h.createdAt < earliest) earliest = h.createdAt;
-  }
   for (const e of entries.value.values()) {
     if (!earliest || e.date < earliest) earliest = e.date;
   }

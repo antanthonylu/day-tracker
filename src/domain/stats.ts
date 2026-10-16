@@ -1,5 +1,4 @@
-import { addDays, compareDateKeys, daysOfMonth, parseDateKey, startOfYear } from './dates';
-import { isApplicable } from './status';
+import { addDays, dayOfWeek } from './dates';
 import type { DateKey, Entry, Habit } from './types';
 
 /** Lookup of 'habitId|date' to entry, which is how the store holds them. */
@@ -9,63 +8,21 @@ function done(habit: Habit, date: DateKey, lookup: EntryLookup): boolean {
   return (lookup(habit.id, date)?.value ?? 0) >= 1;
 }
 
-/**
- * Consecutive applicable days, ending today, that were done.
- *
- * Today not being done yet does not break the streak -- the day isn't over.
- * The count then ends at yesterday, so a streak only dies once a day you
- * could have acted on has passed unanswered. Non-applicable days are stepped
- * over without counting or breaking, so a weekdays-only habit keeps its run
- * across the weekend.
- */
-export function currentStreak(habit: Habit, today: DateKey, lookup: EntryLookup): number {
-  let streak = 0;
-  let date = today;
-  let graceUsed = false;
-
-  while (date >= habit.createdAt) {
-    if (isApplicable(habit, date, today)) {
-      if (done(habit, date, lookup)) {
-        streak += 1;
-      } else if (date === today && !graceUsed) {
-        // Today is still open; look back from yesterday.
-        graceUsed = true;
-      } else {
-        break;
-      }
-    }
-    date = addDays(date, -1);
-  }
-
-  return streak;
-}
-
-/** The longest run of done applicable days anywhere in the habit's history. */
-export function bestStreak(habit: Habit, today: DateKey, lookup: EntryLookup): number {
-  let best = 0;
-  let run = 0;
-
-  for (let date = habit.createdAt; date <= today; date = addDays(date, 1)) {
-    if (!isApplicable(habit, date, today)) continue;
-    if (done(habit, date, lookup)) {
-      run += 1;
-      if (run > best) best = run;
-    } else {
-      run = 0;
-    }
-  }
-
-  return best;
-}
-
 export interface Completion {
   done: number;
-  applicable: number;
-  /** 0..1, or 0 when nothing was applicable. */
+  /** Days in the period that had already happened. */
+  days: number;
+  /** 0..1, or 0 when the period hasn't started. */
   rate: number;
 }
 
-/** Done applicable days over applicable days, across an inclusive range. */
+/**
+ * Days done over days elapsed, across an inclusive range.
+ *
+ * Every past day counts. There is no schedule to exempt a day and no start
+ * date to begin from, so the denominator is simply how much of the period has
+ * happened -- which is also what makes the number comparable between habits.
+ */
 export function completion(
   habit: Habit,
   from: DateKey,
@@ -73,21 +30,16 @@ export function completion(
   today: DateKey,
   lookup: EntryLookup,
 ): Completion {
-  let applicable = 0;
+  const end = to > today ? today : to;
+  let days = 0;
   let completed = 0;
-  const start = compareDateKeys(from, habit.createdAt) < 0 ? habit.createdAt : from;
 
-  for (let date = start; date <= to; date = addDays(date, 1)) {
-    if (!isApplicable(habit, date, today)) continue;
-    applicable += 1;
+  for (let date = from; date <= end; date = addDays(date, 1)) {
+    days += 1;
     if (done(habit, date, lookup)) completed += 1;
   }
 
-  return {
-    done: completed,
-    applicable,
-    rate: applicable === 0 ? 0 : completed / applicable,
-  };
+  return { done: completed, days, rate: days === 0 ? 0 : completed / days };
 }
 
 export function monthCompletion(
@@ -96,9 +48,10 @@ export function monthCompletion(
   today: DateKey,
   lookup: EntryLookup,
 ): Completion {
-  const { year, month } = parseDateKey(monthAnchor);
-  const days = daysOfMonth(year, month);
-  return completion(habit, days[0]!, days.at(-1)!, today, lookup);
+  const [year, month] = [monthAnchor.slice(0, 4), monthAnchor.slice(5, 7)];
+  const first = `${year}-${month}-01`;
+  const last = `${year}-${month}-${new Date(Number(year), Number(month), 0).getDate()}`;
+  return completion(habit, first, last, today, lookup);
 }
 
 export function yearCompletion(
@@ -107,44 +60,50 @@ export function yearCompletion(
   today: DateKey,
   lookup: EntryLookup,
 ): Completion {
-  const start = startOfYear(yearAnchor);
-  return completion(habit, start, `${parseDateKey(start).year}-12-31`, today, lookup);
+  const year = yearAnchor.slice(0, 4);
+  return completion(habit, `${year}-01-01`, `${year}-12-31`, today, lookup);
 }
 
-export function allTimeCompletion(habit: Habit, today: DateKey, lookup: EntryLookup): Completion {
-  return completion(habit, habit.createdAt, today, today, lookup);
-}
-
-/** Total days ever marked done. */
-export function totalCompletions(habit: Habit, today: DateKey, lookup: EntryLookup): number {
-  return allTimeCompletion(habit, today, lookup).done;
+/** Every day on record, from `from` up to today. */
+export function allTimeCompletion(
+  habit: Habit,
+  from: DateKey,
+  today: DateKey,
+  lookup: EntryLookup,
+): Completion {
+  return completion(habit, from, today, today, lookup);
 }
 
 /**
  * Completion rate per weekday (index 0 = Sunday), for "you're strongest on
- * Tuesdays". Weekdays the habit never applies to come back as null rather
+ * Tuesdays". A weekday with no elapsed days yet comes back as null rather
  * than zero, which would read as failure.
  */
-export function byWeekday(habit: Habit, today: DateKey, lookup: EntryLookup): (number | null)[] {
-  const tally = Array.from({ length: 7 }, () => ({ done: 0, applicable: 0 }));
+export function byWeekday(
+  habit: Habit,
+  from: DateKey,
+  today: DateKey,
+  lookup: EntryLookup,
+): (number | null)[] {
+  const tally = Array.from({ length: 7 }, () => ({ done: 0, days: 0 }));
 
-  for (let date = habit.createdAt; date <= today; date = addDays(date, 1)) {
-    if (!isApplicable(habit, date, today)) continue;
-    const slot = tally[new Date(`${date}T12:00:00`).getDay()]!;
-    slot.applicable += 1;
+  for (let date = from; date <= today; date = addDays(date, 1)) {
+    const slot = tally[dayOfWeek(date)]!;
+    slot.days += 1;
     if (done(habit, date, lookup)) slot.done += 1;
   }
 
-  return tally.map((t) => (t.applicable === 0 ? null : t.done / t.applicable));
+  return tally.map((t) => (t.days === 0 ? null : t.done / t.days));
 }
 
 /** The weekday a habit does best on, or null when there isn't enough history. */
 export function bestWeekday(
   habit: Habit,
+  from: DateKey,
   today: DateKey,
   lookup: EntryLookup,
 ): { day: number; rate: number } | null {
-  const rates = byWeekday(habit, today, lookup);
+  const rates = byWeekday(habit, from, today, lookup);
   let bestDay = -1;
   let bestRate = 0;
 

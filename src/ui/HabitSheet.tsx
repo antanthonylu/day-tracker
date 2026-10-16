@@ -5,10 +5,7 @@ import { PALETTE, nextColor } from '../domain/palette';
 import { ICON_IDS, ICON_LABELS } from '../domain/icons';
 import { SHAPE_IDS, SHAPE_LABELS } from '../domain/shapes';
 import type { Habit, IconId, ShapeId } from '../domain/types';
-import { addHabit, habits, today, updateHabit } from '../store/store';
-
-const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+import { addHabit, habits, updateHabit } from '../store/store';
 
 interface Props {
   habit?: Habit;
@@ -21,34 +18,14 @@ export function HabitSheet({ habit, onClose }: Props) {
   const [color, setColor] = useState(habit?.color ?? nextColor(habits.value.length));
   const [shape, setShape] = useState<ShapeId>(habit?.shape ?? 'blob');
   const [icon, setIcon] = useState<IconId>(habit?.icon ?? 'dumbbell');
-  const [activeDays, setActiveDays] = useState<number[]>(
-    habit?.activeDays ?? [0, 1, 2, 3, 4, 5, 6],
-  );
-  const [startDate, setStartDate] = useState(habit?.createdAt ?? today.value);
 
   const trimmed = name.trim();
-  const valid = trimmed.length > 0 && activeDays.length > 0;
-
-  function toggleDay(day: number) {
-    setActiveDays((days) =>
-      days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort(),
-    );
-  }
+  const valid = trimmed.length > 0;
 
   async function save() {
     if (!valid) return;
 
-    const draft: Omit<Habit, 'id' | 'order'> = {
-      name: trimmed,
-      color,
-      shape,
-      icon,
-      createdAt: startDate,
-    };
-
-    // All seven days selected is the same as "no schedule"; storing it as
-    // undefined keeps the common case out of every applicability check.
-    if (activeDays.length < 7) draft.activeDays = activeDays;
+    const draft: Omit<Habit, 'id' | 'order'> = { name: trimmed, color, shape, icon };
 
     if (habit) {
       await updateHabit({
@@ -83,7 +60,7 @@ export function HabitSheet({ habit, onClose }: Props) {
         <input
           type="text"
           value={name}
-          placeholder="Read, Water, Walk…"
+          placeholder="Gym, Read, Walk…"
           maxLength={40}
           onInput={(e) => setName((e.target as HTMLInputElement).value)}
         />
@@ -143,36 +120,6 @@ export function HabitSheet({ habit, onClose }: Props) {
         </div>
         <p class="hint">Stamped into every day you log.</p>
       </fieldset>
-
-      <fieldset class="field">
-        <legend>Active days</legend>
-        <div class="days">
-          {DAY_INITIALS.map((initial, day) => (
-            <button
-              key={day}
-              type="button"
-              class={`day-toggle${activeDays.includes(day) ? ' selected' : ''}`}
-              aria-label={DAY_NAMES[day]}
-              aria-pressed={activeDays.includes(day)}
-              onClick={() => toggleDay(day)}
-            >
-              {initial}
-            </button>
-          ))}
-        </div>
-        <p class="hint">Days you switch off are skipped — they never break a streak.</p>
-      </fieldset>
-
-      <label class="field">
-        <span>Start date</span>
-        <input
-          type="date"
-          value={startDate}
-          max={today.value}
-          onInput={(e) => setStartDate((e.target as HTMLInputElement).value)}
-        />
-        <p class="hint">Stats and streaks begin here.</p>
-      </label>
     </Sheet>
   );
 }

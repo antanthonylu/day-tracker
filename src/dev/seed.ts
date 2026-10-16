@@ -31,10 +31,7 @@ export function demoData(today: string): ExportFile {
     name,
     color: PALETTE[(i * 5) % PALETTE.length]!.hex,
     shape: SHAPE_IDS[i % SHAPE_IDS.length]!,
-    createdAt: start,
     order: i,
-    ...(i === 3 ? { activeDays: [1, 2, 3, 4, 5] } : {}),
-    ...(i === 7 ? { activeDays: [0, 6] } : {}),
   }));
 
   const entries: Entry[] = [];

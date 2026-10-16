@@ -9,7 +9,7 @@ import {
   parseDateKey,
   startOfMonth,
 } from '../domain/dates';
-import { isApplicable, statusOf } from '../domain/status';
+import { statusOf } from '../domain/status';
 import { WEEK_STARTS_ON, type DateKey, type Habit } from '../domain/types';
 import { earliestDate, entryFor, toggleCheck, today } from '../store/store';
 
@@ -135,7 +135,8 @@ export function LogGrid({ habits, onOpenHabit }: Props) {
 
               {habits.map((habit) => {
                 const status = statusOf(habit, entryFor(habit.id, date), date, today.value);
-                const locked = future || !isApplicable(habit, date, today.value);
+                // Only the future is off limits.
+                const locked = future;
 
                 return (
                   <button
@@ -147,13 +148,7 @@ export function LogGrid({ habits, onOpenHabit }: Props) {
                     aria-label={`${habit.name}, ${dayName(date, 'long')} ${parseDateKey(date).day}`}
                     onClick={() => void toggleCheck(habit, date)}
                   >
-                    <Mark
-                      shape={habit.shape}
-                      color={habit.color}
-                      status={status}
-                      size={30}
-                      isToday={isToday}
-                    />
+                    <Mark shape={habit.shape} color={habit.color} status={status} size={30} />
                   </button>
                 );
               })}

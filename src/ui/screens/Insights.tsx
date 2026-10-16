@@ -138,7 +138,7 @@ export function Insights() {
                   </span>
                   <span class="rank-value">{Math.round(now.rate * 100)}%</span>
                   <span class={`rank-delta${delta > 0 ? ' up' : delta < 0 ? ' down' : ''}`}>
-                    {before.applicable === 0 ? '—' : delta > 0 ? `+${delta}` : delta}
+                    {before.days === 0 ? '—' : delta > 0 ? `+${delta}` : delta}
                   </span>
                 </li>
               );
@@ -148,7 +148,7 @@ export function Insights() {
           <h3 class="section-head">Best day of the week</h3>
           <ul class="plain-list">
             {habits.map((habit) => {
-              const best = bestWeekday(habit, today.value, entryFor);
+              const best = bestWeekday(habit, earliestDate.value, today.value, entryFor);
               return (
                 <li key={habit.id}>
                   <Mark shape={habit.shape} color={habit.color} status="complete" size={14} />

@@ -1,20 +1,23 @@
+import { useState } from 'preact/hooks';
 import { Sheet } from './Sheet';
 import { HabitBadge, Mark } from './Mark';
 import { MiniMonth } from './MiniMonth';
-import { dayName, monthLabel, startOfMonth } from '../domain/dates';
-import {
-  allTimeCompletion,
-  bestStreak,
-  bestWeekday,
-  currentStreak,
-  monthCompletion,
-  yearCompletion,
-} from '../domain/stats';
-import type { Habit } from '../domain/types';
-import { archiveHabit, entryFor, today, unarchiveHabit } from '../store/store';
-import { useState } from 'preact/hooks';
 import { HabitSheet } from './HabitSheet';
 import { shareCard } from '../share/card';
+import { dayName, monthLabel, startOfMonth } from '../domain/dates';
+import { allTimeCompletion, bestWeekday, monthCompletion, yearCompletion } from '../domain/stats';
+import type { Habit } from '../domain/types';
+import { archiveHabit, earliestDate, entryFor, today, unarchiveHabit } from '../store/store';
+
+const DAY_SAMPLES = [
+  '2026-11-01',
+  '2026-11-02',
+  '2026-11-03',
+  '2026-11-04',
+  '2026-11-05',
+  '2026-11-06',
+  '2026-11-07',
+];
 
 function percent(rate: number): string {
   return `${Math.round(rate * 100)}%`;
@@ -23,65 +26,37 @@ function percent(rate: number): string {
 export function HabitDetail({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   const [editing, setEditing] = useState(false);
   const now = today.value;
+  const from = earliestDate.value;
   const lookup = entryFor;
 
-  const current = currentStreak(habit, now, lookup);
-  const best = bestStreak(habit, now, lookup);
   const month = monthCompletion(habit, now, now, lookup);
   const year = yearCompletion(habit, now, now, lookup);
-  const all = allTimeCompletion(habit, now, lookup);
-  const strongest = bestWeekday(habit, now, lookup);
-
-  // The gauge compares the current run to the best one, so a long streak reads
-  // as progress rather than a bare number.
-  const gauge = best === 0 ? 0 : Math.min(1, current / best);
+  const all = allTimeCompletion(habit, from, now, lookup);
+  const strongest = bestWeekday(habit, from, now, lookup);
 
   return (
-    <Sheet title={habit.name} onClose={onClose}>
+    <Sheet
+      title={habit.name}
+      onClose={onClose}
+      hideCancel
+      action={{ label: 'Done', onClick: onClose }}
+    >
       <div class="preview">
         <HabitBadge shape={habit.shape} icon={habit.icon} color={habit.color} size={24} />
         <Mark shape={habit.shape} color={habit.color} status="complete" size={40} />
-        <span>
-          {habit.name}
-          <small class="dim">
-            {habit.activeDays ? `${habit.activeDays.length} days a week` : 'every day'}
-          </small>
-        </span>
+        <span>{habit.name}</span>
       </div>
 
       <div class="stat-grid">
-        <Stat label="Current streak" value={`${current}`} unit={current === 1 ? 'day' : 'days'} />
-        <Stat label="Best streak" value={`${best}`} unit={best === 1 ? 'day' : 'days'} />
-        <Stat
-          label="This month"
-          value={percent(month.rate)}
-          unit={`${month.done}/${month.applicable}`}
-        />
-        <Stat
-          label="This year"
-          value={percent(year.rate)}
-          unit={`${year.done}/${year.applicable}`}
-        />
-        <Stat label="All time" value={percent(all.rate)} unit={`${all.done}/${all.applicable}`} />
+        <Stat label="This month" value={percent(month.rate)} unit={`${month.done}/${month.days}`} />
+        <Stat label="This year" value={percent(year.rate)} unit={`${year.done}/${year.days}`} />
         <Stat label="Total days" value={`${all.done}`} unit="marked" />
       </div>
 
-      {best > 0 && (
-        <div class="gauge" aria-label={`Current streak ${current} of best ${best}`}>
-          <div class="gauge-track">
-            <div class="gauge-fill" style={{ width: `${gauge * 100}%`, background: habit.color }} />
-          </div>
-          <div class="gauge-labels">
-            <span>now {current}</span>
-            <span>best {best}</span>
-          </div>
-        </div>
-      )}
-
       {strongest && (
         <p class="hint">
-          Strongest on {dayName(`2026-11-0${strongest.day + 1}`, 'long')}s —{' '}
-          {percent(strongest.rate)} of them done.
+          Strongest on {dayName(DAY_SAMPLES[strongest.day]!, 'long')}s — {percent(strongest.rate)}{' '}
+          of them done.
         </p>
       )}
 

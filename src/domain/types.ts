@@ -13,10 +13,6 @@ export interface Habit {
   shape: ShapeId;
   /** The pictogram in the column header. Falls back to the shape when unset. */
   icon?: IconId;
-  /** 0-6, Sunday first. Undefined means every day. */
-  activeDays?: number[];
-  /** Stats and streaks start here; earlier days are not applicable. */
-  createdAt: DateKey;
   archivedAt?: DateKey;
   order: number;
 }
@@ -56,7 +52,14 @@ export interface ExportFile {
   settings: Settings;
 }
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
-/** How a habit stands on one day. A habit is done or it isn't. */
+/**
+ * How a habit stands on one day.
+ *
+ * 'na' now means one thing only: the day hasn't happened yet. Every past day
+ * is loggable for every habit. Start dates and rest-day schedules used to
+ * produce 'na' too, and a habit could end up unloggable on every single day
+ * with nothing on screen to say why.
+ */
 export type DayStatus = 'complete' | 'missed' | 'na';

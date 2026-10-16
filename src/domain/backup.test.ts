@@ -8,7 +8,6 @@ function habit(over: Partial<Habit> = {}): Habit {
     name: 'Read',
     color: '#2eac84',
     shape: 'blob',
-    createdAt: '2026-10-01',
     order: 0,
     ...over,
   };
@@ -56,9 +55,18 @@ describe('parseBackup', () => {
     expect(() => parseBackup(bad)).toThrow(/shape/);
   });
 
-  it('rejects an impossible date', () => {
-    const bad = file({ habits: [habit({ createdAt: '2027-02-29' })] });
-    expect(() => parseBackup(bad)).toThrow(/createdAt/);
+  it('accepts an older file and drops the fields that no longer exist', () => {
+    const old = {
+      ...file(),
+      schemaVersion: 1,
+      habits: [{ ...habit(), shape: 'circle', createdAt: '2026-10-01', activeDays: [1, 2] }],
+    };
+    const parsed = parseBackup(old);
+    // 'circle' was dropped from the shape set; it maps to its nearest survivor
+    // rather than being rejected or left to render as nothing.
+    expect(parsed.habits[0]!.shape).toBe('blob');
+    expect(parsed.habits[0]).not.toHaveProperty('createdAt');
+    expect(parsed.habits[0]).not.toHaveProperty('activeDays');
   });
 
   it('rejects an entry pointing at a habit that is not in the file', () => {
@@ -80,9 +88,9 @@ describe('parseBackup', () => {
     expect(() => parseBackup(bad)).toThrow(/Two entries/);
   });
 
-  it('rejects a bad activeDays list', () => {
-    const bad = file({ habits: [habit({ activeDays: [1, 9] })] });
-    expect(() => parseBackup(bad)).toThrow(/activeDays/);
+  it('still rejects a shape it has never heard of', () => {
+    const bad = file({ habits: [{ ...habit(), shape: 'trapezoid' } as unknown as Habit] });
+    expect(() => parseBackup(bad)).toThrow(/shape/);
   });
 
   it('falls back to a sane theme', () => {

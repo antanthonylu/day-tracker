@@ -52,7 +52,6 @@ export function MiniMonth({ month, habit, pies, size = 'small', onPick }: Props)
               color={habit.color}
               status={statusOf(habit, entryFor(habit.id, date), date, today.value)}
               size={cell}
-              isToday={date === today.value}
             />
           ) : (
             <DayPie day={pies?.get(date)} size={cell} />

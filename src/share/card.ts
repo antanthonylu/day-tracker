@@ -96,7 +96,7 @@ export function drawShareCard(
 
   ctx.fillStyle = DIM;
   ctx.font = '400 34px ui-monospace, "JetBrains Mono", monospace';
-  ctx.fillText(`${stats.done} of ${stats.applicable} days`, 90, footerY + 50);
+  ctx.fillText(`${stats.done} of ${stats.days} days`, 90, footerY + 50);
 
   ctx.textAlign = 'right';
   ctx.fillText('Day Tracker', WIDTH - 90, footerY + 50);

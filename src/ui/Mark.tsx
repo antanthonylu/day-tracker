@@ -7,12 +7,15 @@ interface Props {
   color: string;
   status: DayStatus;
   size?: number;
-  isToday?: boolean;
   title?: string;
 }
 
 /**
  * One habit on one day.
+ *
+ * Today's mark is drawn exactly like every other: the row already carries an
+ * accent edge and reads TODAY, and a ring plus a scale-down on top of that
+ * made the same shape look like a different one.
  *
  * Every state draws the same silhouette, so a column reads as one shape
  * filling in rather than a mix of shapes and dots:
@@ -21,7 +24,7 @@ interface Props {
  *   n/a     - the empty outline in neutral grey, for a day the habit was never
  *             due: before you created it, a rest day, or one still to come
  */
-export function Mark({ shape, color, status, size = 28, isToday, title }: Props) {
+export function Mark({ shape, color, status, size = 28, title }: Props) {
   const d = SHAPE_PATHS[shape];
   const neutral = status === 'na';
 
@@ -37,15 +40,7 @@ export function Mark({ shape, color, status, size = 28, isToday, title }: Props)
     >
       {title && <title>{title}</title>}
 
-      {isToday && !neutral && (
-        <circle cx="50" cy="50" r="47" fill="none" stroke={color} stroke-width="3" opacity="0.35" />
-      )}
-
-      <g
-        transform={
-          isToday && !neutral ? 'translate(50,50) scale(0.8) translate(-50,-50)' : undefined
-        }
-      >
+      <g>
         {status === 'complete' ? (
           <path d={d} fill={color} fill-rule="evenodd" />
         ) : (

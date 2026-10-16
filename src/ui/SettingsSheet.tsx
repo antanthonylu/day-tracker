@@ -2,7 +2,6 @@ import { useEffect, useState } from 'preact/hooks';
 import { Sheet } from './Sheet';
 import { ManageHabits } from './ManageHabits';
 import { BackupSection } from './BackupSection';
-import { HabitDiagnostics } from './HabitDiagnostics';
 import type { Settings } from '../domain/types';
 import {
   importReplace,
@@ -35,7 +34,12 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   }, [managing]);
 
   return (
-    <Sheet title="Settings" onClose={onClose}>
+    <Sheet
+      title="Settings"
+      onClose={onClose}
+      hideCancel
+      action={{ label: 'Done', onClick: onClose }}
+    >
       <fieldset class="field">
         <legend>Theme</legend>
         <div class="segmented">
@@ -58,8 +62,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       <button type="button" class="wide-button" onClick={() => setManaging(true)}>
         Manage habits
       </button>
-
-      <HabitDiagnostics />
 
       <h3 class="section-head">Storage</h3>
       <dl class="stats">

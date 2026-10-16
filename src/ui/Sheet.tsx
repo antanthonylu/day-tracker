@@ -5,8 +5,14 @@ interface Props {
   title: string;
   onClose: () => void;
   children: ComponentChildren;
-  /** Right-hand action in the sheet header, usually Save. */
+  /** Right-hand action in the sheet header, usually Save or Done. */
   action?: { label: string; onClick: () => void; disabled?: boolean };
+  /**
+   * Hides the left-hand Cancel. For sheets whose changes apply as you make
+   * them, "Cancel" is a lie -- it reverts nothing -- so they show only the
+   * confirming button on the right.
+   */
+  hideCancel?: boolean;
 }
 
 /**
@@ -14,7 +20,7 @@ interface Props {
  * browser dialogs that look nothing like the app and break the standalone
  * illusion, so every prompt and confirmation lives in one of these.
  */
-export function Sheet({ title, onClose, children, action }: Props) {
+export function Sheet({ title, onClose, children, action, hideCancel }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -37,9 +43,13 @@ export function Sheet({ title, onClose, children, action }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <header class="sheet-head">
-          <button type="button" class="sheet-side" onClick={onClose}>
-            Cancel
-          </button>
+          {hideCancel ? (
+            <span class="sheet-side" />
+          ) : (
+            <button type="button" class="sheet-side" onClick={onClose}>
+              Cancel
+            </button>
+          )}
           <h2>{title}</h2>
           {action ? (
             <button

@@ -29,7 +29,12 @@ export function ManageHabits({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Sheet title="Manage habits" onClose={onClose}>
+    <Sheet
+      title="Manage habits"
+      onClose={onClose}
+      hideCancel
+      action={{ label: 'Done', onClick: onClose }}
+    >
       {activeHabits.value.length === 0 && <p class="hint">No active habits.</p>}
 
       <ul class="manage-list">
