@@ -1297,3 +1297,23 @@ button {
   border: 1px solid;
   border-radius: 9px;
 }
+
+.icons {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.icon-option {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--text-faint);
+}
+
+.icon-option.selected {
+  border-color: var(--text-dim);
+  background: var(--surface-sunken);
+}

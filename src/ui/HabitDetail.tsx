@@ -1,5 +1,5 @@
 import { Sheet } from './Sheet';
-import { Mark } from './Mark';
+import { HabitBadge, Mark } from './Mark';
 import { MiniMonth } from './MiniMonth';
 import { dayName, monthLabel, startOfMonth } from '../domain/dates';
 import {
@@ -39,7 +39,8 @@ export function HabitDetail({ habit, onClose }: { habit: Habit; onClose: () => v
   return (
     <Sheet title={habit.name} onClose={onClose}>
       <div class="preview">
-        <Mark shape={habit.shape} color={habit.color} status="complete" size={48} />
+        <HabitBadge shape={habit.shape} icon={habit.icon} color={habit.color} size={24} />
+        <Mark shape={habit.shape} color={habit.color} status="complete" size={40} />
         <span>
           {habit.name}
           <small class="dim">

@@ -1,14 +1,18 @@
 import type { DateKey } from './dates';
+import type { IconId } from './icons';
 import type { ShapeId } from './shapes';
 
-export type { DateKey, ShapeId };
+export type { DateKey, IconId, ShapeId };
 export type HabitId = string;
 
 export interface Habit {
   id: HabitId;
   name: string;
   color: string;
+  /** The abstract mark stamped into every day cell. */
   shape: ShapeId;
+  /** The pictogram in the column header. Falls back to the shape when unset. */
+  icon?: IconId;
   /** 0-6, Sunday first. Undefined means every day. */
   activeDays?: number[];
   /** Stats and streaks start here; earlier days are not applicable. */

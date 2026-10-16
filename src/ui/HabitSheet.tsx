@@ -1,9 +1,10 @@
 import { useState } from 'preact/hooks';
 import { Sheet } from './Sheet';
-import { Mark } from './Mark';
+import { HabitBadge, HabitIcon, Mark } from './Mark';
 import { PALETTE, nextColor } from '../domain/palette';
+import { ICON_IDS, ICON_LABELS } from '../domain/icons';
 import { SHAPE_IDS, SHAPE_LABELS } from '../domain/shapes';
-import type { Habit, ShapeId } from '../domain/types';
+import type { Habit, IconId, ShapeId } from '../domain/types';
 import { addHabit, habits, today, updateHabit } from '../store/store';
 
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -19,6 +20,7 @@ export function HabitSheet({ habit, onClose }: Props) {
   const [name, setName] = useState(habit?.name ?? '');
   const [color, setColor] = useState(habit?.color ?? nextColor(habits.value.length));
   const [shape, setShape] = useState<ShapeId>(habit?.shape ?? 'blob');
+  const [icon, setIcon] = useState<IconId>(habit?.icon ?? 'dumbbell');
   const [activeDays, setActiveDays] = useState<number[]>(
     habit?.activeDays ?? [0, 1, 2, 3, 4, 5, 6],
   );
@@ -40,6 +42,7 @@ export function HabitSheet({ habit, onClose }: Props) {
       name: trimmed,
       color,
       shape,
+      icon,
       createdAt: startDate,
     };
 
@@ -67,8 +70,12 @@ export function HabitSheet({ habit, onClose }: Props) {
       action={{ label: 'Save', onClick: () => void save(), disabled: !valid }}
     >
       <div class="preview">
-        <Mark shape={shape} color={color} status="complete" size={48} />
-        <span>{trimmed || 'Unnamed habit'}</span>
+        <HabitBadge shape={shape} icon={icon} color={color} size={24} />
+        <Mark shape={shape} color={color} status="complete" size={40} />
+        <span>
+          {trimmed || 'Unnamed habit'}
+          <small class="dim">header icon · day mark</small>
+        </span>
       </div>
 
       <label class="field">
@@ -100,7 +107,26 @@ export function HabitSheet({ habit, onClose }: Props) {
       </fieldset>
 
       <fieldset class="field">
-        <legend>Shape</legend>
+        <legend>Icon</legend>
+        <div class="icons">
+          {ICON_IDS.map((id) => (
+            <button
+              key={id}
+              type="button"
+              class={`icon-option${id === icon ? ' selected' : ''}`}
+              aria-label={ICON_LABELS[id]}
+              aria-pressed={id === icon}
+              onClick={() => setIcon(id)}
+            >
+              <HabitIcon icon={id} color={id === icon ? color : 'currentColor'} size={22} />
+            </button>
+          ))}
+        </div>
+        <p class="hint">Shown at the top of the habit's column.</p>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>Day mark</legend>
         <div class="shapes">
           {SHAPE_IDS.map((id) => (
             <button
@@ -115,6 +141,7 @@ export function HabitSheet({ habit, onClose }: Props) {
             </button>
           ))}
         </div>
+        <p class="hint">Stamped into every day you log.</p>
       </fieldset>
 
       <fieldset class="field">

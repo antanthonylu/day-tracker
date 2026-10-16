@@ -101,7 +101,7 @@ export function LogGrid({ habits, onOpenHabit }: Props) {
             aria-label={`${habit.name} details`}
             onClick={() => onOpenHabit(habit)}
           >
-            <HabitBadge shape={habit.shape} color={habit.color} />
+            <HabitBadge shape={habit.shape} icon={habit.icon} color={habit.color} />
           </button>
         ))}
       </div>

@@ -1,4 +1,5 @@
 import { isValidDateKey } from './dates';
+import { isIconId } from './icons';
 import { isShapeId } from './shapes';
 import type { Entry, ExportFile, Habit, Settings } from './types';
 import { SCHEMA_VERSION } from './types';
@@ -27,7 +28,7 @@ function parseHabit(raw: unknown, index: number): Habit {
   const where = `habits[${index}]`;
   if (!isRecord(raw)) throw new InvalidBackupError(`${where} is not an object`);
 
-  const { id, name, color, shape, createdAt, archivedAt, activeDays, order } = raw;
+  const { id, name, color, shape, icon, createdAt, archivedAt, activeDays, order } = raw;
 
   if (typeof id !== 'string' || id.length === 0) {
     throw new InvalidBackupError(`${where}.id is missing`);
@@ -36,6 +37,9 @@ function parseHabit(raw: unknown, index: number): Habit {
     throw new InvalidBackupError(`${where}.name is missing`);
   }
   if (!isShapeId(shape)) throw new InvalidBackupError(`${where}.shape is not a known shape`);
+  if (icon !== undefined && !isIconId(icon)) {
+    throw new InvalidBackupError(`${where}.icon is not a known icon`);
+  }
   if (typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color)) {
     throw new InvalidBackupError(`${where}.color is not a hex colour`);
   }
@@ -57,6 +61,7 @@ function parseHabit(raw: unknown, index: number): Habit {
   }
 
   const habit: Habit = { id, name, color, shape, createdAt, order };
+  if (icon !== undefined) habit.icon = icon;
   if (archivedAt !== undefined) habit.archivedAt = archivedAt;
   if (activeDays !== undefined) habit.activeDays = activeDays as number[];
   return habit;

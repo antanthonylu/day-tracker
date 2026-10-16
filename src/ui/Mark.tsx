@@ -1,5 +1,6 @@
+import { ICON_PATHS } from '../domain/icons';
 import { SHAPE_PATHS } from '../domain/shapes';
-import type { DayStatus, ShapeId } from '../domain/types';
+import type { DayStatus, IconId, ShapeId } from '../domain/types';
 
 interface Props {
   shape: ShapeId;
@@ -66,15 +67,19 @@ export function Mark({ shape, color, status, size = 28, isToday, title }: Props)
 /**
  * The habit's badge at the top of its column.
  *
- * Deliberately not the same thing as a logged cell: it sits in a tinted tile,
- * so a glance down the column never mistakes the header for a day you ticked.
+ * Shows the habit's pictogram, so a glance at the header says "gym" rather
+ * than "red blob". Deliberately not the same thing as a logged cell: it sits
+ * in a tinted tile, so reading down a column can't mistake the header for a
+ * day you ticked. Habits saved before icons existed fall back to their shape.
  */
 export function HabitBadge({
   shape,
+  icon,
   color,
   size = 20,
 }: {
   shape: ShapeId;
+  icon?: IconId;
   color: string;
   size?: number;
 }) {
@@ -86,9 +91,42 @@ export function HabitBadge({
         borderColor: `color-mix(in srgb, ${color} 45%, transparent)`,
       }}
     >
-      <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
-        <path d={SHAPE_PATHS[shape]} fill={color} fill-rule="evenodd" />
-      </svg>
+      {icon ? (
+        <HabitIcon icon={icon} color={color} size={size} />
+      ) : (
+        <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+          <path d={SHAPE_PATHS[shape]} fill={color} fill-rule="evenodd" />
+        </svg>
+      )}
     </span>
+  );
+}
+
+/** A pictogram on its own, for the icon picker and habit headers. */
+export function HabitIcon({
+  icon,
+  color,
+  size = 20,
+}: {
+  icon: IconId;
+  color: string;
+  size?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      {ICON_PATHS[icon].map((d) => (
+        <path key={d} d={d} />
+      ))}
+    </svg>
   );
 }
