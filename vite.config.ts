@@ -10,7 +10,12 @@ export default defineConfig({
     preact(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['apple-touch-icon-180.png', 'favicon.svg'],
+      includeAssets: [
+        'apple-touch-icon-180.png',
+        'apple-touch-icon-167.png',
+        'apple-touch-icon-152.png',
+        'favicon.svg',
+      ],
       manifest: {
         name: 'Day Tracker',
         short_name: 'Day Tracker',

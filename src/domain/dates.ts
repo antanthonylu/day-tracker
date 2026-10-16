@@ -89,3 +89,100 @@ export function todayKey(dayStartsAtHour = 0, now: Date = new Date()): DateKey {
   const key = toDateKey(now);
   return now.getHours() < dayStartsAtHour ? addDays(key, -1) : key;
 }
+
+/* ---- month and range helpers ---- */
+
+/** Every day of a 1-indexed month, in order. */
+export function daysOfMonth(year: number, month: number): DateKey[] {
+  const count = daysInMonth(year, month);
+  const days: DateKey[] = [];
+  for (let day = 1; day <= count; day += 1) {
+    days.push(`${year}-${pad(month)}-${pad(day)}`);
+  }
+  return days;
+}
+
+/** First day of the month a key falls in. */
+export function startOfMonth(key: DateKey): DateKey {
+  const { year, month } = parseDateKey(key);
+  return `${year}-${pad(month)}-01`;
+}
+
+/** First day of the calendar year a key falls in. */
+export function startOfYear(key: DateKey): DateKey {
+  return `${parseDateKey(key).year}-01-01`;
+}
+
+/**
+ * Moves whole months, clamping the day to the shortest month rather than
+ * spilling over: 31 Jan plus one month is 28 Feb, not 3 March.
+ */
+export function addMonths(key: DateKey, n: number): DateKey {
+  const { year, month, day } = parseDateKey(key);
+  const zero = year * 12 + (month - 1) + n;
+  const newYear = Math.floor(zero / 12);
+  const newMonth = (zero % 12) + 1;
+  return `${newYear}-${pad(newMonth)}-${pad(Math.min(day, daysInMonth(newYear, newMonth)))}`;
+}
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+export function monthLabel(key: DateKey, style: 'long' | 'short' = 'long'): string {
+  const { year, month } = parseDateKey(key);
+  const name = MONTH_NAMES[month - 1]!;
+  return `${style === 'short' ? name.slice(0, 3) : name} ${year}`;
+}
+
+export function dayName(key: DateKey, style: 'long' | 'short' | 'narrow' = 'short'): string {
+  const name = DAY_NAMES[dayOfWeek(key)]!;
+  if (style === 'long') return name;
+  if (style === 'narrow') return name.slice(0, 1);
+  return name.slice(0, 3);
+}
+
+/** '15 Oct' — the compact form used in the date switcher. */
+export function shortDateLabel(key: DateKey): string {
+  const { month, day } = parseDateKey(key);
+  return `${day} ${MONTH_NAMES[month - 1]!.slice(0, 3)}`;
+}
+
+/** The `length` days ending at `endKey`, oldest first. */
+export function lastNDays(endKey: DateKey, length: number): DateKey[] {
+  const days: DateKey[] = [];
+  for (let i = length - 1; i >= 0; i -= 1) days.push(addDays(endKey, -i));
+  return days;
+}
+
+export function clampDateKey(key: DateKey, min: DateKey, max: DateKey): DateKey {
+  if (key < min) return min;
+  if (key > max) return max;
+  return key;
+}
+
+/**
+ * How far back the date and month switchers may travel.
+ *
+ * Always at least 1 January of the current year, so this year's calendar is
+ * reachable from day one, and further still if a habit was created before that
+ * or an imported backup carries older entries.
+ */
+export function earliestNavigableDate(today: DateKey, earliestData?: DateKey): DateKey {
+  const yearStart = startOfYear(today);
+  if (earliestData && earliestData < yearStart) return startOfYear(earliestData);
+  return yearStart;
+}

@@ -120,4 +120,8 @@ if __name__ == "__main__":
     render(public / "icon-192.png", 192, 0.14)
     render(public / "icon-512.png", 512, 0.14)
     render(public / "icon-maskable-512.png", 512, 0.26)
+    # iOS picks whichever apple-touch-icon size is closest; offering the three
+    # iPhone/iPad sizes makes it far less likely to fall back to a letter tile.
     render(public / "apple-touch-icon-180.png", 180, 0.16)
+    render(public / "apple-touch-icon-167.png", 167, 0.16)
+    render(public / "apple-touch-icon-152.png", 152, 0.16)

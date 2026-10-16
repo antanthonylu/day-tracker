@@ -1,12 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import {
   addDays,
+  addMonths,
+  clampDateKey,
+  dayName,
   dayOfWeek,
+  daysOfMonth,
   daysBetween,
   daysInMonth,
+  earliestNavigableDate,
   fromDateKey,
   isValidDateKey,
+  lastNDays,
+  monthLabel,
   parseDateKey,
+  shortDateLabel,
+  startOfMonth,
+  startOfYear,
   toDateKey,
   todayKey,
 } from './dates';
@@ -139,5 +149,97 @@ describe('todayKey', () => {
 
   it('rolls back across a month boundary', () => {
     expect(todayKey(4, new Date(2026, 10, 1, 1, 30))).toBe('2026-10-31');
+  });
+});
+
+describe('daysOfMonth', () => {
+  it('lists every day in order', () => {
+    const feb = daysOfMonth(2028, 2);
+    expect(feb).toHaveLength(29);
+    expect(feb[0]).toBe('2028-02-01');
+    expect(feb.at(-1)).toBe('2028-02-29');
+  });
+
+  it('pads single digits', () => {
+    expect(daysOfMonth(2026, 1)[8]).toBe('2026-01-09');
+  });
+});
+
+describe('addMonths', () => {
+  it('moves forward and back', () => {
+    expect(addMonths('2026-10-15', 1)).toBe('2026-11-15');
+    expect(addMonths('2026-10-15', -1)).toBe('2026-09-15');
+  });
+
+  it('crosses years', () => {
+    expect(addMonths('2026-12-15', 1)).toBe('2027-01-15');
+    expect(addMonths('2026-01-15', -1)).toBe('2025-12-15');
+    expect(addMonths('2026-01-15', -13)).toBe('2024-12-15');
+  });
+
+  it('clamps the day instead of spilling into the next month', () => {
+    expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
+    expect(addMonths('2028-01-31', 1)).toBe('2028-02-29'); // leap year
+    expect(addMonths('2026-03-31', -1)).toBe('2026-02-28');
+    expect(addMonths('2026-05-31', 1)).toBe('2026-06-30');
+  });
+});
+
+describe('startOfMonth / startOfYear', () => {
+  it('snaps to the first day', () => {
+    expect(startOfMonth('2026-10-15')).toBe('2026-10-01');
+    expect(startOfYear('2026-10-15')).toBe('2026-01-01');
+  });
+});
+
+describe('lastNDays', () => {
+  it('returns the window oldest first, ending on the given day', () => {
+    expect(lastNDays('2026-10-15', 7)).toEqual([
+      '2026-10-09',
+      '2026-10-10',
+      '2026-10-11',
+      '2026-10-12',
+      '2026-10-13',
+      '2026-10-14',
+      '2026-10-15',
+    ]);
+  });
+
+  it('crosses a month boundary', () => {
+    expect(lastNDays('2026-11-02', 3)).toEqual(['2026-10-31', '2026-11-01', '2026-11-02']);
+  });
+});
+
+describe('clampDateKey', () => {
+  it('holds a key inside the range', () => {
+    expect(clampDateKey('2026-05-01', '2026-01-01', '2026-12-31')).toBe('2026-05-01');
+    expect(clampDateKey('2025-05-01', '2026-01-01', '2026-12-31')).toBe('2026-01-01');
+    expect(clampDateKey('2027-05-01', '2026-01-01', '2026-12-31')).toBe('2026-12-31');
+  });
+});
+
+describe('earliestNavigableDate', () => {
+  it('reaches back to 1 January of the current year by default', () => {
+    expect(earliestNavigableDate('2026-10-15')).toBe('2026-01-01');
+    expect(earliestNavigableDate('2026-01-01')).toBe('2026-01-01');
+  });
+
+  it('reaches further back when older data exists', () => {
+    expect(earliestNavigableDate('2026-10-15', '2024-06-02')).toBe('2024-01-01');
+  });
+
+  it('ignores data from inside the current year', () => {
+    expect(earliestNavigableDate('2026-10-15', '2026-06-02')).toBe('2026-01-01');
+  });
+});
+
+describe('labels', () => {
+  it('formats months and days', () => {
+    expect(monthLabel('2026-10-15')).toBe('October 2026');
+    expect(monthLabel('2026-10-15', 'short')).toBe('Oct 2026');
+    expect(shortDateLabel('2026-10-05')).toBe('5 Oct');
+    expect(dayName('2026-10-15')).toBe('Thu');
+    expect(dayName('2026-10-15', 'long')).toBe('Thursday');
+    expect(dayName('2026-10-15', 'narrow')).toBe('T');
   });
 });

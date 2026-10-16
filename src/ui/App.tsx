@@ -1,10 +1,12 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { TabBar, type TabId } from './TabBar';
 import { UpdateBanner } from './UpdateBanner';
+import { SettingsSheet } from './SettingsSheet';
 import { Today } from './screens/Today';
 import { Month } from './screens/Month';
 import { Year } from './screens/Year';
 import { Insights } from './screens/Insights';
+import { load, loadError, ready, refreshToday } from '../store/store';
 
 const TITLES: Record<TabId, string> = {
   today: 'Today',
@@ -15,25 +17,51 @@ const TITLES: Record<TabId, string> = {
 
 export function App() {
   const [tab, setTab] = useState<TabId>('today');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    void load();
+
+    // A PWA is suspended rather than closed, so an app left open overnight
+    // would still believe it is yesterday without this.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshToday();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   return (
     <div class="app-shell">
       <header class="topbar">
         <h1>{TITLES[tab]}</h1>
-        <button class="icon-button" type="button" aria-label="Settings">
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="Settings"
+          onClick={() => setSettingsOpen(true)}
+        >
           <GearIcon />
         </button>
       </header>
 
       <main class="screen">
-        {tab === 'today' && <Today />}
-        {tab === 'month' && <Month />}
-        {tab === 'year' && <Year />}
-        {tab === 'insights' && <Insights />}
+        {!ready.value ? null : loadError.value ? (
+          <p class="notice error">Couldn’t open your data: {loadError.value}</p>
+        ) : (
+          <>
+            {tab === 'today' && <Today />}
+            {tab === 'month' && <Month />}
+            {tab === 'year' && <Year />}
+            {tab === 'insights' && <Insights />}
+          </>
+        )}
       </main>
 
       <UpdateBanner />
       <TabBar active={tab} onChange={setTab} />
+
+      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }

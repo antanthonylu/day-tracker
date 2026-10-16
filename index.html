@@ -9,13 +9,19 @@
     <title>Day Tracker</title>
     <meta name="description" content="A calendar-first habit tracker that lives on your phone." />
 
-    <!-- iOS reads this, not the manifest icons. -->
-    <link rel="apple-touch-icon" href="./apple-touch-icon-180.png" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <!-- iOS reads these, not the manifest icons, and it wants an absolute path
+         with an explicit size -- a bare relative href is what makes it give up
+         and draw a letter tile instead. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- "black", not "black-translucent": translucent lets the page paint up
+         under the clock and battery, which left the title looking washed out. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Day Tracker" />
 
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
