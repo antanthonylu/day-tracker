@@ -1,6 +1,5 @@
 import { dayOfWeek } from './dates';
 import type { DateKey, DayStatus, Entry, Habit } from './types';
-import { targetOf } from './types';
 
 /**
  * Whether a habit is answerable on a day at all.
@@ -19,7 +18,7 @@ export function isApplicable(habit: Habit, date: DateKey, today: DateKey): boole
   return true;
 }
 
-/** How a habit stands on one day. */
+/** Done, not done, or never asked. */
 export function statusOf(
   habit: Habit,
   entry: Entry | undefined,
@@ -27,23 +26,11 @@ export function statusOf(
   today: DateKey,
 ): DayStatus {
   if (!isApplicable(habit, date, today)) return 'na';
-  const value = entry?.value ?? 0;
-  if (value >= targetOf(habit)) return 'complete';
-  if (value > 0) return 'partial';
-  return 'missed';
+  return (entry?.value ?? 0) >= 1 ? 'complete' : 'missed';
 }
 
-/**
- * How full the mark should be drawn, 0..1.
- *
- * Check habits are all or nothing; count habits fill like a glass so progress
- * is legible before the day is done.
- */
-export function fillFraction(habit: Habit, entry: Entry | undefined): number {
-  const value = entry?.value ?? 0;
-  if (value <= 0) return 0;
-  const target = targetOf(habit);
-  return Math.min(1, value / target);
+export function isDone(entry: Entry | undefined): boolean {
+  return (entry?.value ?? 0) >= 1;
 }
 
 /** Active habits for a day, in display order. */

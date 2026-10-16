@@ -80,5 +80,20 @@ it either fully succeeds or changes nothing.
 
 ## Status
 
-Milestone 1 of 8 (see `HANDOFF.md` §12): installable shell. Tabs are
+Milestones 1-3 of 8 (see `HANDOFF.md` §12): installable shell, data layer and
+habit management, and daily logging. Month, Year and Insights are still
 placeholders until their milestone lands.
+
+### Where this differs from HANDOFF.md
+
+The spec is the starting point, not a contract. These were changed on purpose:
+
+- **Habits are binary.** No count habits, targets, units or steps — a day is
+  done or it isn't. `Entry.value` stays numeric so that could come back.
+- **Twelve shapes, not twenty-four**, chosen so no two share a silhouette at
+  the ~10px the year grid will draw them at.
+- **No "week starts on" or "day starts at" settings.** Weeks start Sunday and
+  days start at midnight, fixed, as `WEEK_STARTS_ON` / `DAY_STARTS_AT_HOUR`.
+- **The date switcher travels forward past today** (read-only) and back to at
+  least 1 January of the current year, rather than being pinned to habit
+  history.

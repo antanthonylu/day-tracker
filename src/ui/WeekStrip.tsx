@@ -1,5 +1,6 @@
-import { dayName, lastNDays, parseDateKey } from '../domain/dates';
+import { dayName, dayOfWeek, lastNDays, parseDateKey } from '../domain/dates';
 import { isApplicable, statusOf } from '../domain/status';
+import { WEEK_STARTS_ON } from '../domain/types';
 import { activeHabits, entryFor, today } from '../store/store';
 
 interface Props {
@@ -18,23 +19,34 @@ export function WeekStrip({ selected, onSelect }: Props) {
 
   return (
     <div class="week-strip">
-      {days.map((date) => {
+      {days.map((date, index) => {
         const due = activeHabits.value.filter((h) => isApplicable(h, date, today.value));
         const done = due.filter(
           (h) => statusOf(h, entryFor(h.id, date), date, today.value) === 'complete',
         ).length;
         const ratio = due.length === 0 ? 0 : done / due.length;
 
+        // A dashed rule where one week ends and the next begins, so a run of
+        // days reads as weeks rather than an undifferentiated row.
+        const startsWeek = index > 0 && dayOfWeek(date) === WEEK_STARTS_ON;
+
         return (
           <button
             key={date}
             type="button"
-            class={`week-day${date === selected ? ' selected' : ''}${date > today.value ? ' future' : ''}`}
-            aria-label={`${date}, ${done} of ${due.length} done`}
+            class={[
+              'week-day',
+              date === selected ? 'selected' : '',
+              date > today.value ? 'future' : '',
+              startsWeek ? 'week-break' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            aria-label={`${dayName(date, 'long')} ${parseDateKey(date).day}, ${done} of ${due.length} done`}
             aria-current={date === selected ? 'date' : undefined}
             onClick={() => onSelect(date)}
           >
-            <span class="week-dow">{dayName(date, 'narrow')}</span>
+            <span class="week-dow">{dayName(date)}</span>
             <svg viewBox="0 0 36 36" width="26" height="26" aria-hidden="true">
               <circle
                 cx="18"

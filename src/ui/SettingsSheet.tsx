@@ -28,42 +28,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title="Settings" onClose={onClose}>
       <fieldset class="field">
-        <legend>Week starts on</legend>
-        <div class="segmented">
-          {([0, 1] as const).map((day) => (
-            <button
-              key={day}
-              type="button"
-              class={current.weekStartsOn === day ? 'selected' : ''}
-              onClick={() => void updateSettings({ weekStartsOn: day })}
-            >
-              {day === 0 ? 'Sunday' : 'Monday'}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <label class="field">
-        <span>Day starts at</span>
-        <select
-          value={String(current.dayStartsAtHour)}
-          onChange={(e) =>
-            void updateSettings({ dayStartsAtHour: Number((e.target as HTMLSelectElement).value) })
-          }
-        >
-          {[0, 1, 2, 3, 4, 5, 6].map((hour) => (
-            <option key={hour} value={String(hour)}>
-              {hour === 0 ? 'Midnight' : `${hour}:00`}
-            </option>
-          ))}
-        </select>
-        <p class="hint">
-          Anything logged before this hour counts as the previous day — so a 2am entry lands where
-          you’d say it did.
-        </p>
-      </label>
-
-      <fieldset class="field">
         <legend>Theme</legend>
         <div class="segmented">
           {THEMES.map((theme) => (

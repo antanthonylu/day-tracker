@@ -286,9 +286,25 @@ button {
   opacity: 0.4;
 }
 
+/* The boundary between one week and the next. Faint on purpose: it should
+   group the days at a glance without competing with the rings. */
+.week-day.week-break {
+  position: relative;
+}
+
+.week-day.week-break::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 2px;
+  bottom: 2px;
+  border-left: 1px dashed var(--border);
+}
+
 .week-dow,
 .week-num {
-  font-size: 10px;
+  font-size: 9px;
+  letter-spacing: 0;
 }
 
 .week-num {
@@ -350,28 +366,6 @@ button {
   flex: none;
   display: block;
   color: var(--text-faint);
-}
-
-.counter {
-  display: flex;
-  gap: 2px;
-}
-
-.counter button {
-  width: var(--tap-min);
-  min-height: var(--tap-min);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-dim);
-  font-size: 18px;
-}
-
-.counter button:active:not(:disabled) {
-  background: var(--surface-sunken);
-}
-
-.counter button:disabled {
-  opacity: 0.3;
 }
 
 .add-button {

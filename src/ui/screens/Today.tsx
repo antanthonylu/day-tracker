@@ -4,16 +4,9 @@ import { HabitSheet } from '../HabitSheet';
 import { WeekStrip } from '../WeekStrip';
 import { DateSwitcher } from '../DateSwitcher';
 import { addDays, clampDateKey } from '../../domain/dates';
-import { fillFraction, isApplicable, statusOf } from '../../domain/status';
-import { stepOf, targetOf, type DateKey, type Habit } from '../../domain/types';
-import {
-  activeHabits,
-  bumpCount,
-  earliestDate,
-  entryFor,
-  toggleCheck,
-  today,
-} from '../../store/store';
+import { isApplicable, statusOf } from '../../domain/status';
+import type { DateKey, Habit } from '../../domain/types';
+import { activeHabits, earliestDate, entryFor, toggleCheck, today } from '../../store/store';
 
 export function Today() {
   const [picked, setPicked] = useState<DateKey | null>(null);
@@ -69,74 +62,26 @@ export function Today() {
 }
 
 function HabitRow({ habit, date, frozen }: { habit: Habit; date: DateKey; frozen: boolean }) {
-  const entry = entryFor(habit.id, date);
-  const status = statusOf(habit, entry, date, today.value);
+  const status = statusOf(habit, entryFor(habit.id, date), date, today.value);
   // A day off the schedule is shown but inert -- it is a rest day, not a miss.
   const restDay = !frozen && !isApplicable(habit, date, today.value);
-  const locked = frozen || restDay;
-  const value = entry?.value ?? 0;
-
-  const mark = (
-    <Mark
-      shape={habit.shape}
-      color={habit.color}
-      status={status}
-      fill={fillFraction(habit, entry)}
-      size={34}
-      isToday={date === today.value}
-    />
-  );
-
-  if (habit.kind === 'count') {
-    const target = targetOf(habit);
-    return (
-      <li class={`habit-row${restDay ? ' rest' : ''}`}>
-        <button
-          type="button"
-          class="habit-main"
-          disabled={locked}
-          onClick={() => void bumpCount(habit, date, 1)}
-        >
-          {mark}
-          <span class="habit-name">{habit.name}</span>
-          <span class="habit-value">
-            {restDay ? 'rest day' : `${value}/${target}${habit.unit ? ` ${habit.unit}` : ''}`}
-          </span>
-        </button>
-        {!restDay && (
-          <div class="counter">
-            <button
-              type="button"
-              aria-label={`Subtract ${stepOf(habit)} from ${habit.name}`}
-              disabled={locked || value <= 0}
-              onClick={() => void bumpCount(habit, date, -1)}
-            >
-              &minus;
-            </button>
-            <button
-              type="button"
-              aria-label={`Add ${stepOf(habit)} to ${habit.name}`}
-              disabled={locked}
-              onClick={() => void bumpCount(habit, date, 1)}
-            >
-              +
-            </button>
-          </div>
-        )}
-      </li>
-    );
-  }
 
   return (
     <li class={`habit-row${restDay ? ' rest' : ''}`}>
       <button
         type="button"
         class="habit-main"
-        disabled={locked}
+        disabled={frozen || restDay}
         aria-pressed={status === 'complete'}
         onClick={() => void toggleCheck(habit, date)}
       >
-        {mark}
+        <Mark
+          shape={habit.shape}
+          color={habit.color}
+          status={status}
+          size={34}
+          isToday={date === today.value}
+        />
         <span class="habit-name">{habit.name}</span>
         <span class="habit-value">
           {restDay ? 'rest day' : status === 'complete' ? 'done' : ''}

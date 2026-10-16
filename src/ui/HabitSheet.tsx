@@ -3,7 +3,7 @@ import { Sheet } from './Sheet';
 import { Mark } from './Mark';
 import { PALETTE, nextColor } from '../domain/palette';
 import { SHAPE_IDS, SHAPE_LABELS } from '../domain/shapes';
-import type { Habit, HabitKind, ShapeId } from '../domain/types';
+import type { Habit, ShapeId } from '../domain/types';
 import { addHabit, habits, today, updateHabit } from '../store/store';
 
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -18,23 +18,14 @@ export function HabitSheet({ habit, onClose }: Props) {
   const editing = Boolean(habit);
   const [name, setName] = useState(habit?.name ?? '');
   const [color, setColor] = useState(habit?.color ?? nextColor(habits.value.length));
-  const [shape, setShape] = useState<ShapeId>(habit?.shape ?? 'circle');
-  const [kind, setKind] = useState<HabitKind>(habit?.kind ?? 'check');
-  const [target, setTarget] = useState(String(habit?.target ?? 8));
-  const [unit, setUnit] = useState(habit?.unit ?? '');
-  const [step, setStep] = useState(String(habit?.step ?? 1));
+  const [shape, setShape] = useState<ShapeId>(habit?.shape ?? 'blob');
   const [activeDays, setActiveDays] = useState<number[]>(
     habit?.activeDays ?? [0, 1, 2, 3, 4, 5, 6],
   );
   const [startDate, setStartDate] = useState(habit?.createdAt ?? today.value);
 
   const trimmed = name.trim();
-  const parsedTarget = Number(target);
-  const parsedStep = Number(step);
-  const valid =
-    trimmed.length > 0 &&
-    activeDays.length > 0 &&
-    (kind === 'check' || (parsedTarget > 0 && parsedStep > 0));
+  const valid = trimmed.length > 0 && activeDays.length > 0;
 
   function toggleDay(day: number) {
     setActiveDays((days) =>
@@ -49,7 +40,6 @@ export function HabitSheet({ habit, onClose }: Props) {
       name: trimmed,
       color,
       shape,
-      kind,
       createdAt: startDate,
     };
 
@@ -57,15 +47,7 @@ export function HabitSheet({ habit, onClose }: Props) {
     // undefined keeps the common case out of every applicability check.
     if (activeDays.length < 7) draft.activeDays = activeDays;
 
-    if (kind === 'count') {
-      draft.target = parsedTarget;
-      draft.step = parsedStep;
-      if (unit.trim()) draft.unit = unit.trim();
-    }
-
     if (habit) {
-      // Rebuild rather than spread, so switching Count -> Check actually drops
-      // the old target instead of leaving a stale one behind.
       await updateHabit({
         ...draft,
         id: habit.id,
@@ -134,66 +116,6 @@ export function HabitSheet({ habit, onClose }: Props) {
           ))}
         </div>
       </fieldset>
-
-      <fieldset class="field">
-        <legend>Kind</legend>
-        <div class="segmented">
-          <button
-            type="button"
-            class={kind === 'check' ? 'selected' : ''}
-            onClick={() => setKind('check')}
-          >
-            Check
-          </button>
-          <button
-            type="button"
-            class={kind === 'count' ? 'selected' : ''}
-            onClick={() => setKind('count')}
-          >
-            Count
-          </button>
-        </div>
-        <p class="hint">
-          {kind === 'check'
-            ? 'One tap marks the day done.'
-            : 'Tap to add to a running total until you hit the target.'}
-        </p>
-      </fieldset>
-
-      {kind === 'count' && (
-        <div class="row-fields">
-          <label class="field">
-            <span>Target</span>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              value={target}
-              onInput={(e) => setTarget((e.target as HTMLInputElement).value)}
-            />
-          </label>
-          <label class="field">
-            <span>Unit</span>
-            <input
-              type="text"
-              value={unit}
-              placeholder="glasses"
-              maxLength={12}
-              onInput={(e) => setUnit((e.target as HTMLInputElement).value)}
-            />
-          </label>
-          <label class="field">
-            <span>Per tap</span>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              value={step}
-              onInput={(e) => setStep((e.target as HTMLInputElement).value)}
-            />
-          </label>
-        </div>
-      )}
 
       <fieldset class="field">
         <legend>Active days</legend>

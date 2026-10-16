@@ -1,6 +1,6 @@
 import { signal, computed } from '@preact/signals';
 import type { DateKey, Entry, Habit, HabitId, Settings } from '../domain/types';
-import { DEFAULT_SETTINGS, stepOf, targetOf } from '../domain/types';
+import { DAY_STARTS_AT_HOUR, DEFAULT_SETTINGS } from '../domain/types';
 import { earliestNavigableDate, todayKey } from '../domain/dates';
 import { IndexedDbAdapter } from '../storage/IndexedDbAdapter';
 import type { StorageAdapter } from '../storage/StorageAdapter';
@@ -31,7 +31,7 @@ const dayTick = signal(0);
 
 export const today = computed<DateKey>(() => {
   void dayTick.value; // subscribe: re-evaluate when the day may have rolled over
-  return todayKey(settings.value.dayStartsAtHour);
+  return todayKey(DAY_STARTS_AT_HOUR);
 });
 
 /** Oldest day the switchers will travel to: 1 January this year, or earlier. */
@@ -139,23 +139,13 @@ export async function setValue(habit: Habit, date: DateKey, value: number): Prom
   await adapter.saveEntry({ habitId: habit.id, date, value: clamped });
 }
 
-/** Check habits: done becomes not-done and back. */
+/** Done becomes not-done and back. */
 export async function toggleCheck(habit: Habit, date: DateKey): Promise<void> {
-  const current = entryFor(habit.id, date)?.value ?? 0;
-  await setValue(habit, date, current >= 1 ? 0 : 1);
+  await setValue(habit, date, entryFor(habit.id, date)?.value ? 0 : 1);
 }
 
-/** Count habits: one tap's worth, in either direction. */
-export async function bumpCount(habit: Habit, date: DateKey, direction: 1 | -1): Promise<void> {
-  const current = entryFor(habit.id, date)?.value ?? 0;
-  await setValue(habit, date, current + stepOf(habit) * direction);
-}
-
-/** Month-grid taps: complete a day outright, or clear it. */
-export async function toggleDay(habit: Habit, date: DateKey): Promise<void> {
-  const current = entryFor(habit.id, date)?.value ?? 0;
-  await setValue(habit, date, current >= targetOf(habit) ? 0 : targetOf(habit));
-}
+/** Alias used by the calendar grids, where a tap means the same thing. */
+export const toggleDay = toggleCheck;
 
 /* ---- settings ---- */
 
