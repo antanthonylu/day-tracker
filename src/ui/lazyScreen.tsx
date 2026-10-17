@@ -11,17 +11,29 @@ import type { ComponentType, JSX } from 'preact';
  */
 export function lazyScreen<P>(load: () => Promise<ComponentType<P>>) {
   let cached: ComponentType<P> | undefined;
+  let inflight: Promise<ComponentType<P>> | undefined;
 
   return function Lazy(props: P) {
-    const [Loaded, setLoaded] = useState<ComponentType<P> | undefined>(cached);
+    // Both of these wrap the component in an arrow on purpose. A function
+    // handed to useState is treated as a lazy initialiser and *called*, and a
+    // function handed to the setter is treated as an updater and *called* --
+    // so passing the component bare stores whatever it returns when invoked
+    // with no props, and the next render tries to use that as a component
+    // type. It only bit on the second visit, once the cache was warm.
+    const [Loaded, setLoaded] = useState<ComponentType<P> | undefined>(() => cached);
 
     useEffect(() => {
       if (Loaded) return;
       let alive = true;
-      void load().then((component) => {
+
+      // One import even if the screen is opened and left several times while
+      // it is still arriving.
+      inflight ??= load();
+      void inflight.then((component) => {
         cached = component;
         if (alive) setLoaded(() => component);
       });
+
       return () => {
         alive = false;
       };
