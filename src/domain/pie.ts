@@ -1,20 +1,22 @@
 import { isApplicable, statusOf } from './status';
 import type { DateKey, Entry, Habit } from './types';
 
-/** What one day's pie needs to draw itself: how many wedges, and which are filled. */
+/**
+ * One day's wedges.
+ *
+ * `slots` has one entry per habit, always in the habits' own order: the colour
+ * when that habit was done, null when it wasn't. The index carries the
+ * meaning, so a habit owns the same slice of the circle on every day of every
+ * month -- the first of three habits is always the top-right third, whether or
+ * not the other two happened. Packing only the completed colours would slide
+ * each habit around depending on its neighbours, which makes a grid of days
+ * impossible to read at a glance.
+ */
 export interface PieDay {
   total: number;
-  colors: string[];
+  slots: (string | null)[];
 }
 
-/**
- * Precomputes every day's wedges in one pass.
- *
- * Rendering a year means 365 pies. Letting each one re-derive which habits
- * applied that day turned into thousands of repeated calls and a visible
- * stall on opening the Year tab, so the work happens once, here, and the
- * components become dumb.
- */
 export function buildPieData(
   habits: Habit[],
   dates: DateKey[],
@@ -24,18 +26,13 @@ export function buildPieData(
   const data = new Map<DateKey, PieDay>();
 
   for (const date of dates) {
-    const colors: string[] = [];
-    let total = 0;
-
-    for (const habit of habits) {
-      if (!isApplicable(habit, date, today)) continue;
-      total += 1;
-      if (statusOf(habit, lookup(habit.id, date), date, today) === 'complete') {
-        colors.push(habit.color);
-      }
-    }
-
-    data.set(date, { total, colors });
+    const slots = habits.map((habit) =>
+      isApplicable(habit, date, today) &&
+      statusOf(habit, lookup(habit.id, date), date, today) === 'complete'
+        ? habit.color
+        : null,
+    );
+    data.set(date, { total: habits.length, slots });
   }
 
   return data;

@@ -31,7 +31,7 @@ export function YearMonth({ month, pies, habit, onPick }: Props) {
     .map((d) =>
       habit
         ? statusOf(habit, entryFor(habit.id, d), d, now)
-        : (pies?.get(d)?.colors.join('') ?? ''),
+        : (pies?.get(d)?.slots.join(',') ?? ''),
     )
     .join('|');
 
@@ -102,8 +102,11 @@ export function YearMonth({ month, pies, habit, onPick }: Props) {
       ctx.stroke();
       ctx.globalAlpha = 1;
 
+      // Index, not order of completion: each habit owns the same slice on
+      // every day, so where a colour sits tells you which habit it is.
       const slice = (Math.PI * 2) / day.total;
-      day.colors.forEach((color, i) => {
+      day.slots.forEach((color, i) => {
+        if (!color) return;
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.moveTo(cx, cy);

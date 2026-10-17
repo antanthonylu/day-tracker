@@ -83,10 +83,12 @@ export function MiniMonth({ month, habit, pies, size = 'small', onPick }: Props)
 }
 
 /**
- * Every habit due that day as an equal wedge, filled when it was done.
+ * A day as a circle divided equally between every habit, each filled in its
+ * own fixed slice when it was done.
  *
  * Equal wedges rather than only-completed slices: the size of the gap then
- * means something, so a half-empty circle reads as half a day.
+ * means something, so a half-empty circle reads as half a day. Each habit
+ * keeps the same slice across every day, so a colour's position identifies it.
  */
 export function DayPie({ day, size }: { day: PieDay | undefined; size: number }) {
   if (!day || day.total === 0) {
@@ -118,9 +120,11 @@ export function DayPie({ day, size }: { day: PieDay | undefined; size: number })
         stroke-width="2"
         opacity="0.22"
       />
-      {day.colors.map((color, i) => (
-        <path key={i} d={wedge(20, 20, 17, i * slice, (i + 1) * slice)} fill={color} />
-      ))}
+      {day.slots.map((color, i) =>
+        color ? (
+          <path key={i} d={wedge(20, 20, 17, i * slice, (i + 1) * slice)} fill={color} />
+        ) : null,
+      )}
     </svg>
   );
 }
