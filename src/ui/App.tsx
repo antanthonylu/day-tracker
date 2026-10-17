@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { TabBar, type TabId } from './TabBar';
 import { UpdateBanner } from './UpdateBanner';
 import { BackupBanner } from './BackupBanner';
-import { lazyScreen } from './lazyScreen';
+import { lazyScreen, preloadWhenIdle } from './lazyScreen';
 import { Log } from './screens/Log';
 import { load, loadError, ready, refreshToday } from '../store/store';
 
@@ -34,7 +34,16 @@ export function App() {
       if (document.visibilityState === 'visible') refreshToday();
     };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+
+    // Fetch the other screens once the app is idle, so the first tap on each
+    // tab is instant instead of showing an empty frame while its code
+    // arrives. They stay out of the launch bundle either way.
+    const stopPreloading = preloadWhenIdle([Month, Year, Insights, SettingsSheet, HabitSheet]);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      stopPreloading();
+    };
   }, []);
 
   return (
@@ -64,7 +73,9 @@ export function App() {
         </div>
       </header>
 
-      <main class={`screen screen-${tab}`}>
+      {/* Keyed on the tab so each screen is a fresh element and its enter
+          animation restarts, giving the switch a cross-fade. */}
+      <main key={tab} class={`screen screen-${tab}`}>
         {!ready.value ? (
           <div class="screen-loading" aria-busy="true" />
         ) : loadError.value ? (

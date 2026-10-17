@@ -1354,3 +1354,33 @@ button {
   flex: 1;
   min-height: 120px;
 }
+
+/* ---- tab transitions ------------------------------------------------- */
+
+/* A short rise and fade as a screen arrives. Short on purpose: long enough to
+   connect the two states, not long enough to wait for. The tab bar and top
+   bar never move, so only the content crosses over. */
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+
+.screen {
+  animation: screen-in 170ms var(--ease) both;
+}
+
+/* The log's own rows shouldn't re-animate when only the month changes, so the
+   animation lives on the screen element, which is keyed by tab. */
+.tab svg {
+  transition: transform var(--fast) var(--ease);
+}
+
+.tab[aria-current='page'] svg {
+  transform: translateY(-1px) scale(1.06);
+}
+
+.tab:active svg {
+  transform: scale(0.92);
+}
